@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=2">
+    <link rel="stylesheet" href="style.css?v=3">
 </head>
 
 <body>
@@ -64,7 +64,7 @@
                 Sudah punya akun? <a href="login.html">Masuk</a>
             </p>
 
-            <p style="text-align: center; margin-top: 1rem; font-size: 0.75rem; color: #666;">v2.0</p>
+            <p style="text-align: center; margin-top: 1rem; font-size: 0.75rem; color: #666;">v3.0</p>
         </div>
     </div>
 
@@ -84,7 +84,6 @@
             appId: "1:40404300194:web:6fbfb34d3d3daad966c2fb"
         };
 
-        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
@@ -105,37 +104,33 @@
             const password = document.getElementById('password').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
 
-            // Hide messages
             errorMessage.classList.add('hidden');
             successMessage.classList.add('hidden');
 
-            // Validate passwords match
             if (password !== confirmPassword) {
                 errorMessage.textContent = '❌ Password tidak cocok.';
                 errorMessage.classList.remove('hidden');
                 return;
             }
 
-            // Disable button
             submitBtn.disabled = true;
             submitBtn.textContent = 'Mendaftar...';
 
             try {
-                console.log('📝 Step 1: Creating user in Firebase Auth...');
-
-                // Step 1: Create user in Firebase Auth
+                console.log('📝 Step 1: Creating user...');
                 const userCredential = await auth.createUserWithEmailAndPassword(email, password);
                 const user = userCredential.user;
-
                 console.log('✅ User created:', user.uid);
 
-                // Step 2: Update display name
                 console.log('📝 Step 2: Updating display name...');
                 await user.updateProfile({ displayName: displayName });
                 console.log('✅ Display name updated');
 
-                // Step 3: Create user document in Firestore
-                console.log('📝 Step 3: Creating Firestore document...');
+                console.log('📝 Step 3: Sending verification email...');
+                await user.sendEmailVerification();
+                console.log('✅ Verification email sent to:', email);
+
+                console.log('📝 Step 4: Creating Firestore document...');
                 await db.collection('users').doc(user.uid).set({
                     uid: user.uid,
                     email: email,
@@ -146,14 +141,8 @@
                 });
                 console.log('✅ Firestore document created');
 
-                // Success!
-                successMessage.innerHTML = '✅ Akun berhasil dibuat!<br>Mengalihkan ke dashboard...';
-                successMessage.classList.remove('hidden');
-
-                // Redirect after 2 seconds
-                setTimeout(() => {
-                    window.location.href = '/member/index.html';
-                }, 2000);
+                // Redirect to verify email page
+                window.location.href = '/verify-email.html';
 
             } catch (error) {
                 console.error('❌ Error:', error);

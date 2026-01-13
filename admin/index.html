@@ -9,9 +9,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../style.css?v=3">
     <style>
-        /* Hide everything until auth is confirmed */
         .dashboard {
             display: none;
         }
@@ -28,7 +27,8 @@
             justify-content: center;
             z-index: 9999;
             color: white;
-            font-family: Inter, sans-serif;
+            flex-direction: column;
+            gap: 1rem;
         }
 
         .auth-loading.hidden {
@@ -42,16 +42,12 @@
 </head>
 
 <body>
-    <!-- Loading Screen (shown by default) -->
     <div class="auth-loading" id="authLoading">
-        <div style="text-align: center;">
-            <div style="font-size: 2rem; margin-bottom: 1rem;">⏳</div>
-            <div>Memverifikasi akses admin...</div>
-        </div>
+        <div style="font-size: 2rem;">⏳</div>
+        <div id="loadingText">Memverifikasi akses admin...</div>
     </div>
 
     <div class="dashboard" id="dashboardContent">
-        <!-- Sidebar -->
         <aside class="sidebar">
             <div class="sidebar-logo">
                 <a href="/" class="logo">Sebagian.</a>
@@ -72,52 +68,46 @@
                 <a href="/" class="btn btn-secondary btn-block btn-sm mb-2">
                     <i class="fas fa-store"></i> Lihat Website
                 </a>
-                <button class="btn btn-danger btn-block btn-sm" onclick="Auth.logout()">
+                <button class="btn btn-danger btn-block btn-sm" onclick="logout()">
                     <i class="fas fa-sign-out-alt"></i> Logout
                 </button>
             </div>
         </aside>
 
-        <!-- Main Content -->
         <main class="dashboard-main">
             <div class="dashboard-header">
                 <h1>Admin Dashboard</h1>
                 <p class="text-muted">Overview platform Sebagian</p>
             </div>
 
-            <!-- Stats Cards -->
             <div class="grid-3 mb-4" style="grid-template-columns: repeat(4, 1fr);">
                 <div class="card">
                     <p class="text-muted mb-1">Total Produk</p>
                     <h2 id="totalProducts">-</h2>
                 </div>
-
                 <div class="card">
                     <p class="text-muted mb-1">Total Members</p>
                     <h2 id="totalMembers">-</h2>
                 </div>
-
                 <div class="card">
                     <p class="text-muted mb-1">Transaksi Sukses</p>
                     <h2 id="totalTransactions">-</h2>
                 </div>
-
                 <div class="card">
                     <p class="text-muted mb-1">Total Pendapatan</p>
                     <h2 id="totalRevenue">-</h2>
                 </div>
             </div>
 
-            <!-- Quick Actions -->
             <div class="grid-2 mb-4">
                 <div class="card">
                     <h3 class="mb-3"><i class="fas fa-bolt"></i> Aksi Cepat</h3>
                     <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                        <a href="/admin/products.html?action=add" class="btn btn-primary btn-sm">
+                        <a href="/admin/products.html" class="btn btn-primary btn-sm">
                             <i class="fas fa-plus"></i> Tambah Produk
                         </a>
                         <a href="/admin/transactions.html" class="btn btn-secondary btn-sm">
-                            <i class="fas fa-clock"></i> Cek Pending
+                            <i class="fas fa-clock"></i> Cek Transaksi
                         </a>
                         <a href="/admin/settings.html" class="btn btn-secondary btn-sm">
                             <i class="fas fa-edit"></i> Edit Landing Page
@@ -132,78 +122,74 @@
                     </p>
                 </div>
             </div>
-
-            <!-- Recent Transactions -->
-            <div class="card">
-                <div class="flex-between mb-3">
-                    <h3>Transaksi Terbaru</h3>
-                    <a href="/admin/transactions.html" class="btn btn-secondary btn-sm">Lihat Semua</a>
-                </div>
-
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>User</th>
-                                <th>Produk</th>
-                                <th>Jumlah</th>
-                                <th>Status</th>
-                                <th>Tanggal</th>
-                            </tr>
-                        </thead>
-                        <tbody id="recentTransactions">
-                            <tr>
-                                <td colspan="6" class="text-center text-muted" style="padding: 2rem;">
-                                    Memuat data...
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
         </main>
     </div>
 
-    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script src="../app.js"></script>
 
     <script>
-        async function init() {
-            // Wait for Firebase auth state
-            const user = await Auth.getCurrentUser();
+        const firebaseConfig = {
+            apiKey: "AIzaSyDnehs_q4onSxnzfqRrK-yS8IaK48ep2dk",
+            authDomain: "sebagian-platform.firebaseapp.com",
+            projectId: "sebagian-platform",
+            storageBucket: "sebagian-platform.firebasestorage.app",
+            messagingSenderId: "40404300194",
+            appId: "1:40404300194:web:6fbfb34d3d3daad966c2fb"
+        };
 
-            // Not logged in
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        function logout() {
+            auth.signOut().then(() => window.location.href = '/login.html');
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount);
+        }
+
+        auth.onAuthStateChanged(async (user) => {
+            console.log('Auth state:', user ? user.email : 'no user');
+
             if (!user) {
                 window.location.replace('/login.html');
                 return;
             }
 
-            // Email not verified
             if (!user.emailVerified) {
                 window.location.replace('/verify-email.html');
                 return;
             }
 
-            // Check admin role
-            const userData = await Auth.getUserData(user.uid);
-            if (!userData || userData.role !== 'admin') {
-                alert('Akses ditolak. Anda bukan admin.');
-                window.location.replace('/member/index.html');
-                return;
+            try {
+                document.getElementById('loadingText').textContent = 'Mengecek role admin...';
+
+                const doc = await db.collection('users').doc(user.uid).get();
+                const userData = doc.exists ? doc.data() : null;
+
+                console.log('User data:', userData);
+
+                if (!userData || userData.role !== 'admin') {
+                    alert('Akses ditolak. Anda bukan admin.\n\nUntuk menjadi admin, ubah field "role" di Firestore Console menjadi "admin".');
+                    window.location.replace('/member/index.html');
+                    return;
+                }
+
+                // Show dashboard
+                document.getElementById('authLoading').classList.add('hidden');
+                document.getElementById('dashboardContent').classList.add('visible');
+
+                // Load stats
+                await loadStats();
+
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('loadingText').textContent = '❌ Error: ' + error.message;
             }
-
-            // Auth passed - show dashboard
-            document.getElementById('authLoading').classList.add('hidden');
-            document.getElementById('dashboardContent').classList.add('visible');
-
-            // Load data
-            await loadStats();
-            await loadRecentTransactions();
-        }
+        });
 
         async function loadStats() {
             try {
@@ -212,70 +198,16 @@
                 const transactionsSnap = await db.collection('transactions').where('status', '==', 'paid').get();
 
                 let revenue = 0;
-                transactionsSnap.forEach(doc => {
-                    revenue += doc.data().amount || 0;
-                });
+                transactionsSnap.forEach(doc => revenue += doc.data().amount || 0);
 
                 document.getElementById('totalProducts').textContent = productsSnap.size;
                 document.getElementById('totalMembers').textContent = membersSnap.size;
                 document.getElementById('totalTransactions').textContent = transactionsSnap.size;
-                document.getElementById('totalRevenue').textContent = UI.formatCurrency(revenue);
+                document.getElementById('totalRevenue').textContent = formatCurrency(revenue);
             } catch (error) {
-                console.error('Error loading stats:', error);
+                console.error('Stats error:', error);
             }
         }
-
-        async function loadRecentTransactions() {
-            try {
-                const snapshot = await db.collection('transactions')
-                    .orderBy('createdAt', 'desc')
-                    .limit(5)
-                    .get();
-
-                const tbody = document.getElementById('recentTransactions');
-
-                if (snapshot.empty) {
-                    tbody.innerHTML = `
-                        <tr>
-                            <td colspan="6" class="text-center text-muted" style="padding: 2rem;">
-                                Belum ada transaksi
-                            </td>
-                        </tr>
-                    `;
-                    return;
-                }
-
-                const rows = [];
-                for (const doc of snapshot.docs) {
-                    const tx = doc.data();
-
-                    const statusBadge = {
-                        'paid': 'badge-success',
-                        'pending': 'badge-warning',
-                        'manual_pending': 'badge-info',
-                        'failed': 'badge-danger'
-                    }[tx.status] || 'badge-info';
-
-                    rows.push(`
-                        <tr>
-                            <td><code>${doc.id.substring(0, 8)}...</code></td>
-                            <td>${tx.userEmail || tx.userId?.substring(0, 8) || '-'}</td>
-                            <td>${tx.productName || tx.productId?.substring(0, 8) || '-'}</td>
-                            <td>${UI.formatCurrency(tx.amount || 0)}</td>
-                            <td><span class="badge ${statusBadge}">${tx.status}</span></td>
-                            <td>${tx.createdAt ? UI.formatDate(tx.createdAt) : '-'}</td>
-                        </tr>
-                    `);
-                }
-
-                tbody.innerHTML = rows.join('');
-            } catch (error) {
-                console.error('Error loading transactions:', error);
-            }
-        }
-
-        // Start immediately
-        init();
     </script>
 </body>
 

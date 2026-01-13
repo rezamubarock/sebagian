@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../style.css?v=3">
     <style>
         .dashboard {
             display: none;
@@ -27,6 +27,8 @@
             justify-content: center;
             z-index: 9999;
             color: white;
+            flex-direction: column;
+            gap: 1rem;
         }
 
         .auth-loading.hidden {
@@ -41,10 +43,8 @@
 
 <body>
     <div class="auth-loading" id="authLoading">
-        <div style="text-align: center;">
-            <div style="font-size: 2rem; margin-bottom: 1rem;">⏳</div>
-            <div>Memverifikasi akun...</div>
-        </div>
+        <div style="font-size: 2rem;">⏳</div>
+        <div>Memuat dashboard...</div>
     </div>
 
     <div class="dashboard" id="dashboardContent">
@@ -56,12 +56,11 @@
             <nav class="sidebar-nav">
                 <ul>
                     <li><a href="/member/index.html" class="active"><i class="fas fa-home"></i> Dashboard</a></li>
-                    <li><a href="/member/products.html"><i class="fas fa-box"></i> Produk Saya</a></li>
                 </ul>
             </nav>
 
             <div class="sidebar-footer">
-                <button class="btn btn-secondary btn-block btn-sm" onclick="Auth.logout()">
+                <button class="btn btn-secondary btn-block btn-sm" onclick="logout()">
                     <i class="fas fa-sign-out-alt"></i> Logout
                 </button>
             </div>
@@ -78,41 +77,16 @@
 
             <div class="grid-3 mb-4">
                 <div class="card">
-                    <div class="flex-between">
-                        <div>
-                            <p class="text-muted mb-1">Produk Anda</p>
-                            <h2 id="productCount">0</h2>
-                        </div>
-                        <div class="feature-icon" style="width: 50px; height: 50px; font-size: 1.25rem;">
-                            <i class="fas fa-box"></i>
-                        </div>
-                    </div>
+                    <p class="text-muted mb-1">Produk Anda</p>
+                    <h2 id="productCount">0</h2>
                 </div>
-
                 <div class="card">
-                    <div class="flex-between">
-                        <div>
-                            <p class="text-muted mb-1">Web Tools</p>
-                            <h2 id="webToolCount">0</h2>
-                        </div>
-                        <div class="feature-icon"
-                            style="width: 50px; height: 50px; font-size: 1.25rem; background: linear-gradient(135deg, var(--accent-secondary), var(--accent-primary));">
-                            <i class="fas fa-globe"></i>
-                        </div>
-                    </div>
+                    <p class="text-muted mb-1">Web Tools</p>
+                    <h2 id="webToolCount">0</h2>
                 </div>
-
                 <div class="card">
-                    <div class="flex-between">
-                        <div>
-                            <p class="text-muted mb-1">Software</p>
-                            <h2 id="softwareCount">0</h2>
-                        </div>
-                        <div class="feature-icon"
-                            style="width: 50px; height: 50px; font-size: 1.25rem; background: linear-gradient(135deg, var(--accent-success), var(--accent-secondary));">
-                            <i class="fas fa-download"></i>
-                        </div>
-                    </div>
+                    <p class="text-muted mb-1">Software</p>
+                    <h2 id="softwareCount">0</h2>
                 </div>
             </div>
 
@@ -124,8 +98,11 @@
 
                 <div id="productsGrid" class="grid-3">
                     <div class="text-center" style="grid-column: 1 / -1; padding: 3rem;">
-                        <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--accent-primary);"></i>
-                        <p class="text-muted mt-2">Memuat produk...</p>
+                        <i class="fas fa-box-open"
+                            style="font-size: 3rem; color: var(--text-muted); margin-bottom: 1rem;"></i>
+                        <h4>Belum Ada Produk</h4>
+                        <p class="text-muted mb-3">Anda belum memiliki produk.</p>
+                        <a href="/" class="btn btn-primary">Lihat Produk</a>
                     </div>
                 </div>
             </div>
@@ -135,85 +112,78 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script src="../app.js"></script>
 
     <script>
-        let currentUser = null;
-        let userData = null;
+        const firebaseConfig = {
+            apiKey: "AIzaSyDnehs_q4onSxnzfqRrK-yS8IaK48ep2dk",
+            authDomain: "sebagian-platform.firebaseapp.com",
+            projectId: "sebagian-platform",
+            storageBucket: "sebagian-platform.firebasestorage.app",
+            messagingSenderId: "40404300194",
+            appId: "1:40404300194:web:6fbfb34d3d3daad966c2fb"
+        };
 
-        async function init() {
-            currentUser = await Auth.getCurrentUser();
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
 
-            if (!currentUser) {
+        function logout() {
+            auth.signOut().then(() => window.location.href = '/login.html');
+        }
+
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) {
                 window.location.replace('/login.html');
                 return;
             }
 
-            if (!currentUser.emailVerified) {
+            // Check email verification
+            if (!user.emailVerified) {
                 window.location.replace('/verify-email.html');
                 return;
             }
 
-            userData = await Auth.getUserData(currentUser.uid);
+            // Get user data
+            try {
+                const doc = await db.collection('users').doc(user.uid).get();
+                const userData = doc.exists ? doc.data() : null;
 
-            // Show dashboard
-            document.getElementById('authLoading').classList.add('hidden');
-            document.getElementById('dashboardContent').classList.add('visible');
+                // Show dashboard
+                document.getElementById('authLoading').classList.add('hidden');
+                document.getElementById('dashboardContent').classList.add('visible');
 
-            document.getElementById('userName').textContent = userData?.displayName || currentUser.email.split('@')[0];
+                document.getElementById('userName').textContent = userData?.displayName || user.email.split('@')[0];
 
-            await loadMyProducts();
-        }
-
-        async function loadMyProducts() {
-            const productsGrid = document.getElementById('productsGrid');
-            const purchasedIds = userData?.purchasedProducts || [];
-
-            if (purchasedIds.length === 0) {
-                productsGrid.innerHTML = `
-                    <div class="text-center" style="grid-column: 1 / -1; padding: 3rem;">
-                        <i class="fas fa-box-open" style="font-size: 3rem; color: var(--text-muted); margin-bottom: 1rem;"></i>
-                        <h4>Belum Ada Produk</h4>
-                        <p class="text-muted mb-3">Anda belum memiliki produk.</p>
-                        <a href="/" class="btn btn-primary">Lihat Produk</a>
-                    </div>
-                `;
-                return;
+                // Load products
+                const purchasedIds = userData?.purchasedProducts || [];
+                if (purchasedIds.length > 0) {
+                    await loadProducts(purchasedIds);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('authLoading').innerHTML = '<div>❌ Error: ' + error.message + '</div>';
             }
+        });
 
+        async function loadProducts(purchasedIds) {
             let webToolCount = 0;
             let softwareCount = 0;
-            const productsHtml = [];
+            const html = [];
 
-            for (const productId of purchasedIds) {
-                const product = await Products.getById(productId);
-                if (product) {
-                    if (product.type === 'web_tool') webToolCount++;
+            for (const pid of purchasedIds) {
+                const doc = await db.collection('products').doc(pid).get();
+                if (doc.exists) {
+                    const p = doc.data();
+                    if (p.type === 'web_tool') webToolCount++;
                     else softwareCount++;
 
-                    productsHtml.push(`
+                    html.push(`
                         <div class="card" style="padding: 1.5rem;">
-                            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
-                                <div style="width: 50px; height: 50px; background: var(--gradient-primary); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;">
-                                    <i class="fas ${product.type === 'web_tool' ? 'fa-globe' : 'fa-download'}" style="color: white;"></i>
-                                </div>
-                                <div>
-                                    <h4 style="margin-bottom: 0.25rem;">${product.name}</h4>
-                                    <span class="badge ${product.type === 'web_tool' ? 'badge-info' : 'badge-success'}">
-                                        ${product.type === 'web_tool' ? 'Web Tool' : 'Software'}
-                                    </span>
-                                </div>
-                            </div>
-                            <p class="text-muted" style="font-size: 0.875rem; margin-bottom: 1rem;">
-                                ${product.description?.substring(0, 80) || 'No description'}...
-                            </p>
-                            ${product.type === 'web_tool'
-                            ? `<a href="${product.accessUrl}" target="_blank" class="btn btn-primary btn-block btn-sm">
-                                    <i class="fas fa-external-link-alt"></i> Gunakan Tool
-                                   </a>`
-                            : `<a href="${product.downloadUrl}" target="_blank" class="btn btn-success btn-block btn-sm">
-                                    <i class="fas fa-download"></i> Download
-                                   </a>`
+                            <h4 style="margin-bottom: 0.5rem;">${p.name}</h4>
+                            <p class="text-muted" style="font-size: 0.875rem; margin-bottom: 1rem;">${p.description?.substring(0, 60) || ''}...</p>
+                            ${p.type === 'web_tool'
+                            ? `<a href="${p.accessUrl}" target="_blank" class="btn btn-primary btn-block btn-sm"><i class="fas fa-external-link-alt"></i> Gunakan</a>`
+                            : `<a href="${p.downloadUrl}" target="_blank" class="btn btn-success btn-block btn-sm"><i class="fas fa-download"></i> Download</a>`
                         }
                         </div>
                     `);
@@ -224,10 +194,10 @@
             document.getElementById('webToolCount').textContent = webToolCount;
             document.getElementById('softwareCount').textContent = softwareCount;
 
-            productsGrid.innerHTML = productsHtml.join('');
+            if (html.length > 0) {
+                document.getElementById('productsGrid').innerHTML = html.join('');
+            }
         }
-
-        init();
     </script>
 </body>
 
