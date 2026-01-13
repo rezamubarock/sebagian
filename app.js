@@ -5,12 +5,12 @@
 // Dapatkan dari: Firebase Console > Project Settings > Your apps > Web app
 
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
+    apiKey: "AIzaSyDnehs_q4onSxnzfqRrK-yS8IaK48ep2dk",
+    authDomain: "sebagian-platform.firebaseapp.com",
+    projectId: "sebagian-platform",
+    storageBucket: "sebagian-platform.firebasestorage.app",
+    messagingSenderId: "40404300194",
+    appId: "1:40404300194:web:6fbfb34d3d3daad966c2fb"
 };
 
 // Initialize Firebase
