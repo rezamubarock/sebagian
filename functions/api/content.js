@@ -13,7 +13,10 @@ export async function onRequestGet(context) {
         };
 
         return new Response(JSON.stringify(value || defaults), {
-            headers: { "Content-Type": "application/json" }
+            headers: {
+                "Content-Type": "application/json",
+                "Cache-Control": "no-store, max-age=0"
+            }
         });
     } catch (err) {
         // Return defaults if KV is not bound (e.g., local dev without setup)
@@ -21,7 +24,12 @@ export async function onRequestGet(context) {
             hero_title: "Masa Depan<br><span class=\"gradient-text\">Kreativitas Digital</span>",
             hero_desc: "Kami sedang membangun sesuatu yang luar biasa. Bagian dari perjalanan baru yang menggabungkan teknologi dan seni.",
             footer_text: "© 2026 Sebagian Inc. Dibuat dengan ♥ di Indonesia."
-        }), { headers: { "Content-Type": "application/json" } });
+        }), {
+            headers: {
+                "Content-Type": "application/json",
+                "Cache-Control": "no-store"
+            }
+        });
     }
 }
 
