@@ -11,6 +11,33 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../style.css">
     <style>
+        .dashboard {
+            display: none;
+        }
+
+        .auth-loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #0a0a0a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            color: white;
+            font-family: Inter, sans-serif;
+        }
+
+        .auth-loading.hidden {
+            display: none;
+        }
+
+        .dashboard.visible {
+            display: flex;
+        }
+
         .modal {
             display: none;
             position: fixed;
@@ -57,8 +84,14 @@
 </head>
 
 <body>
-    <div class="dashboard">
-        <!-- Sidebar -->
+    <div class="auth-loading" id="authLoading">
+        <div style="text-align: center;">
+            <div style="font-size: 2rem; margin-bottom: 1rem;">⏳</div>
+            <div>Memverifikasi akses admin...</div>
+        </div>
+    </div>
+
+    <div class="dashboard" id="dashboardContent">
         <aside class="sidebar">
             <div class="sidebar-logo">
                 <a href="/" class="logo">Sebagian.</a>
@@ -82,7 +115,6 @@
             </div>
         </aside>
 
-        <!-- Main Content -->
         <main class="dashboard-main">
             <div class="dashboard-header flex-between">
                 <div>
@@ -94,7 +126,6 @@
                 </button>
             </div>
 
-            <!-- Products Table -->
             <div class="card">
                 <div class="table-container">
                     <table>
@@ -109,9 +140,7 @@
                         </thead>
                         <tbody id="productsTable">
                             <tr>
-                                <td colspan="5" class="text-center text-muted" style="padding: 2rem;">
-                                    <i class="fas fa-spinner fa-spin"></i> Memuat...
-                                </td>
+                                <td colspan="5" class="text-center text-muted" style="padding: 2rem;">Memuat...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -120,7 +149,7 @@
         </main>
     </div>
 
-    <!-- Add/Edit Product Modal -->
+    <!-- Modal -->
     <div class="modal" id="productModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -139,15 +168,15 @@
                 <div class="form-group">
                     <label class="form-label">Deskripsi</label>
                     <textarea class="form-input" id="description" rows="3"
-                        placeholder="Deskripsi singkat produk..."></textarea>
+                        placeholder="Deskripsi singkat..."></textarea>
                 </div>
 
                 <div class="grid-2" style="gap: 1rem;">
                     <div class="form-group">
                         <label class="form-label">Tipe *</label>
                         <select class="form-input" id="type" required>
-                            <option value="web_tool">Web Tool (Akses URL)</option>
-                            <option value="software_download">Software (Download)</option>
+                            <option value="web_tool">Web Tool</option>
+                            <option value="software_download">Software Download</option>
                         </select>
                     </div>
 
@@ -157,33 +186,20 @@
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label">Model Pricing</label>
-                    <select class="form-input" id="pricingModel">
-                        <option value="lifetime">Lifetime (Sekali Bayar)</option>
-                        <option value="monthly">Bulanan</option>
-                    </select>
-                </div>
-
                 <div class="form-group" id="accessUrlGroup">
                     <label class="form-label">URL Akses Tool</label>
-                    <input type="url" class="form-input" id="accessUrl" placeholder="https://tool.sebagian.com/...">
+                    <input type="url" class="form-input" id="accessUrl" placeholder="https://...">
                 </div>
 
                 <div class="form-group hidden" id="downloadUrlGroup">
                     <label class="form-label">URL Download</label>
-                    <input type="url" class="form-input" id="downloadUrl" placeholder="https://storage.../file.zip">
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">URL Gambar (opsional)</label>
-                    <input type="url" class="form-input" id="imageUrl" placeholder="https://...">
+                    <input type="url" class="form-input" id="downloadUrl" placeholder="https://...">
                 </div>
 
                 <div class="form-group">
                     <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
                         <input type="checkbox" id="isActive" checked>
-                        <span>Produk Aktif (tampil di website)</span>
+                        <span>Produk Aktif</span>
                     </label>
                 </div>
 
@@ -195,7 +211,6 @@
         </div>
     </div>
 
-    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -205,14 +220,24 @@
         let products = [];
 
         async function init() {
-            if (!await RouteGuard.requireAuth()) return;
-            if (!await RouteGuard.requireAdmin('/member/index.html')) return;
+            const user = await Auth.getCurrentUser();
+            if (!user) { window.location.replace('/login.html'); return; }
+            if (!user.emailVerified) { window.location.replace('/verify-email.html'); return; }
 
-            // Toggle URL fields based on type
+            const userData = await Auth.getUserData(user.uid);
+            if (!userData || userData.role !== 'admin') {
+                alert('Akses ditolak.');
+                window.location.replace('/member/index.html');
+                return;
+            }
+
+            document.getElementById('authLoading').classList.add('hidden');
+            document.getElementById('dashboardContent').classList.add('visible');
+
             document.getElementById('type').addEventListener('change', (e) => {
-                const isWebTool = e.target.value === 'web_tool';
-                document.getElementById('accessUrlGroup').classList.toggle('hidden', !isWebTool);
-                document.getElementById('downloadUrlGroup').classList.toggle('hidden', isWebTool);
+                const isWeb = e.target.value === 'web_tool';
+                document.getElementById('accessUrlGroup').classList.toggle('hidden', !isWeb);
+                document.getElementById('downloadUrlGroup').classList.toggle('hidden', isWeb);
             });
 
             await loadProducts();
@@ -226,44 +251,24 @@
                 const tbody = document.getElementById('productsTable');
 
                 if (products.length === 0) {
-                    tbody.innerHTML = `
-                        <tr>
-                            <td colspan="5" class="text-center text-muted" style="padding: 2rem;">
-                                Belum ada produk. Klik "Tambah Produk" untuk memulai.
-                            </td>
-                        </tr>
-                    `;
+                    tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted" style="padding: 2rem;">Belum ada produk</td></tr>`;
                     return;
                 }
 
                 tbody.innerHTML = products.map(p => `
                     <tr>
-                        <td>
-                            <div style="display: flex; align-items: center; gap: 1rem;">
-                                <div style="width: 40px; height: 40px; background: var(--gradient-primary); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center;">
-                                    <i class="fas ${p.type === 'web_tool' ? 'fa-globe' : 'fa-download'}" style="color: white;"></i>
-                                </div>
-                                <div>
-                                    <strong>${p.name}</strong>
-                                    <div class="text-muted" style="font-size: 0.8rem;">${p.description?.substring(0, 40) || 'No description'}...</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td><span class="badge ${p.type === 'web_tool' ? 'badge-info' : 'badge-success'}">${p.type === 'web_tool' ? 'Web Tool' : 'Software'}</span></td>
+                        <td><strong>${p.name}</strong></td>
+                        <td><span class="badge ${p.type === 'web_tool' ? 'badge-info' : 'badge-success'}">${p.type === 'web_tool' ? 'Web' : 'Software'}</span></td>
                         <td>${UI.formatCurrency(p.price)}</td>
                         <td><span class="badge ${p.isActive ? 'badge-success' : 'badge-danger'}">${p.isActive ? 'Aktif' : 'Nonaktif'}</span></td>
                         <td>
-                            <button class="btn btn-secondary btn-sm" onclick="editProduct('${p.id}')" style="margin-right: 0.5rem;">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="btn btn-danger btn-sm" onclick="deleteProduct('${p.id}')">
-                                <i class="fas fa-trash"></i>
-                            </button>
+                            <button class="btn btn-secondary btn-sm" onclick="editProduct('${p.id}')"><i class="fas fa-edit"></i></button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteProduct('${p.id}')"><i class="fas fa-trash"></i></button>
                         </td>
                     </tr>
                 `).join('');
             } catch (error) {
-                console.error('Error loading products:', error);
+                console.error('Error:', error);
             }
         }
 
@@ -277,16 +282,9 @@
                 document.getElementById('description').value = product.description || '';
                 document.getElementById('type').value = product.type;
                 document.getElementById('price').value = product.price;
-                document.getElementById('pricingModel').value = product.pricingModel || 'lifetime';
                 document.getElementById('accessUrl').value = product.accessUrl || '';
                 document.getElementById('downloadUrl').value = product.downloadUrl || '';
-                document.getElementById('imageUrl').value = product.imageUrl || '';
                 document.getElementById('isActive').checked = product.isActive !== false;
-
-                // Toggle URL fields
-                const isWebTool = product.type === 'web_tool';
-                document.getElementById('accessUrlGroup').classList.toggle('hidden', !isWebTool);
-                document.getElementById('downloadUrlGroup').classList.toggle('hidden', isWebTool);
             } else {
                 document.getElementById('productForm').reset();
                 document.getElementById('productId').value = '';
@@ -304,21 +302,13 @@
         }
 
         async function deleteProduct(id) {
-            if (!confirm('Yakin ingin menghapus produk ini?')) return;
-
-            try {
-                await db.collection('products').doc(id).delete();
-                await loadProducts();
-            } catch (error) {
-                alert('Gagal menghapus produk');
-                console.error(error);
-            }
+            if (!confirm('Yakin ingin menghapus?')) return;
+            await db.collection('products').doc(id).delete();
+            await loadProducts();
         }
 
-        // Form submit
         document.getElementById('productForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-
             const btn = document.getElementById('submitBtn');
             UI.setButtonLoading(btn, true);
 
@@ -328,31 +318,24 @@
                 description: document.getElementById('description').value,
                 type: document.getElementById('type').value,
                 price: parseInt(document.getElementById('price').value),
-                pricingModel: document.getElementById('pricingModel').value,
                 accessUrl: document.getElementById('accessUrl').value,
                 downloadUrl: document.getElementById('downloadUrl').value,
-                imageUrl: document.getElementById('imageUrl').value,
                 isActive: document.getElementById('isActive').checked,
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             };
 
             try {
                 if (productId) {
-                    // Update existing
                     await db.collection('products').doc(productId).update(data);
                 } else {
-                    // Create new
                     data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
                     await db.collection('products').add(data);
                 }
-
                 closeModal();
                 await loadProducts();
             } catch (error) {
-                alert('Gagal menyimpan produk');
-                console.error(error);
+                alert('Error: ' + error.message);
             }
-
             UI.setButtonLoading(btn, false);
         });
 

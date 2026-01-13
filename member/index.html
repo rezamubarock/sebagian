@@ -10,11 +10,44 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../style.css">
+    <style>
+        .dashboard {
+            display: none;
+        }
+
+        .auth-loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #0a0a0a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            color: white;
+        }
+
+        .auth-loading.hidden {
+            display: none;
+        }
+
+        .dashboard.visible {
+            display: flex;
+        }
+    </style>
 </head>
 
 <body>
-    <div class="dashboard">
-        <!-- Sidebar -->
+    <div class="auth-loading" id="authLoading">
+        <div style="text-align: center;">
+            <div style="font-size: 2rem; margin-bottom: 1rem;">⏳</div>
+            <div>Memverifikasi akun...</div>
+        </div>
+    </div>
+
+    <div class="dashboard" id="dashboardContent">
         <aside class="sidebar">
             <div class="sidebar-logo">
                 <a href="/" class="logo">Sebagian.</a>
@@ -24,8 +57,6 @@
                 <ul>
                     <li><a href="/member/index.html" class="active"><i class="fas fa-home"></i> Dashboard</a></li>
                     <li><a href="/member/products.html"><i class="fas fa-box"></i> Produk Saya</a></li>
-                    <li><a href="/member/transactions.html"><i class="fas fa-receipt"></i> Riwayat Transaksi</a></li>
-                    <li><a href="/member/profile.html"><i class="fas fa-user"></i> Profil</a></li>
                 </ul>
             </nav>
 
@@ -36,17 +67,15 @@
             </div>
         </aside>
 
-        <!-- Main Content -->
         <main class="dashboard-main">
             <div class="dashboard-header flex-between">
                 <div>
                     <h1>Selamat Datang, <span id="userName">User</span>!</h1>
-                    <p class="text-muted">Kelola semua tools dan produk digital Anda di sini.</p>
+                    <p class="text-muted">Kelola produk digital Anda di sini.</p>
                 </div>
                 <a href="/" class="btn btn-secondary btn-sm"><i class="fas fa-store"></i> Lihat Toko</a>
             </div>
 
-            <!-- Stats Cards -->
             <div class="grid-3 mb-4">
                 <div class="card">
                     <div class="flex-between">
@@ -87,7 +116,6 @@
                 </div>
             </div>
 
-            <!-- My Products -->
             <div class="card">
                 <div class="flex-between mb-3">
                     <h3>Produk Anda</h3>
@@ -104,7 +132,6 @@
         </main>
     </div>
 
-    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -115,16 +142,26 @@
         let userData = null;
 
         async function init() {
-            // Check auth
-            if (!await RouteGuard.requireAuth()) return;
-
             currentUser = await Auth.getCurrentUser();
+
+            if (!currentUser) {
+                window.location.replace('/login.html');
+                return;
+            }
+
+            if (!currentUser.emailVerified) {
+                window.location.replace('/verify-email.html');
+                return;
+            }
+
             userData = await Auth.getUserData(currentUser.uid);
 
-            // Update UI with user name
+            // Show dashboard
+            document.getElementById('authLoading').classList.add('hidden');
+            document.getElementById('dashboardContent').classList.add('visible');
+
             document.getElementById('userName').textContent = userData?.displayName || currentUser.email.split('@')[0];
 
-            // Load user's products
             await loadMyProducts();
         }
 
@@ -137,14 +174,13 @@
                     <div class="text-center" style="grid-column: 1 / -1; padding: 3rem;">
                         <i class="fas fa-box-open" style="font-size: 3rem; color: var(--text-muted); margin-bottom: 1rem;"></i>
                         <h4>Belum Ada Produk</h4>
-                        <p class="text-muted mb-3">Anda belum memiliki produk. Mulai belanja sekarang!</p>
+                        <p class="text-muted mb-3">Anda belum memiliki produk.</p>
                         <a href="/" class="btn btn-primary">Lihat Produk</a>
                     </div>
                 `;
                 return;
             }
 
-            // Fetch products the user owns
             let webToolCount = 0;
             let softwareCount = 0;
             const productsHtml = [];
@@ -169,7 +205,7 @@
                                 </div>
                             </div>
                             <p class="text-muted" style="font-size: 0.875rem; margin-bottom: 1rem;">
-                                ${product.description?.substring(0, 80)}...
+                                ${product.description?.substring(0, 80) || 'No description'}...
                             </p>
                             ${product.type === 'web_tool'
                             ? `<a href="${product.accessUrl}" target="_blank" class="btn btn-primary btn-block btn-sm">
@@ -184,7 +220,6 @@
                 }
             }
 
-            // Update counts
             document.getElementById('productCount').textContent = purchasedIds.length;
             document.getElementById('webToolCount').textContent = webToolCount;
             document.getElementById('softwareCount').textContent = softwareCount;

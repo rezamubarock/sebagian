@@ -10,10 +10,47 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../style.css">
+    <style>
+        /* Hide everything until auth is confirmed */
+        .dashboard {
+            display: none;
+        }
+
+        .auth-loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #0a0a0a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            color: white;
+            font-family: Inter, sans-serif;
+        }
+
+        .auth-loading.hidden {
+            display: none;
+        }
+
+        .dashboard.visible {
+            display: flex;
+        }
+    </style>
 </head>
 
 <body>
-    <div class="dashboard">
+    <!-- Loading Screen (shown by default) -->
+    <div class="auth-loading" id="authLoading">
+        <div style="text-align: center;">
+            <div style="font-size: 2rem; margin-bottom: 1rem;">⏳</div>
+            <div>Memverifikasi akses admin...</div>
+        </div>
+    </div>
+
+    <div class="dashboard" id="dashboardContent">
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="sidebar-logo">
@@ -89,11 +126,9 @@
                 </div>
 
                 <div class="card">
-                    <h3 class="mb-3"><i class="fas fa-info-circle"></i> Info Penting</h3>
+                    <h3 class="mb-3"><i class="fas fa-info-circle"></i> Info</h3>
                     <p class="text-muted" style="font-size: 0.9rem;">
-                        Pastikan Firebase project Anda sudah dikonfigurasi dengan benar di file <code>app.js</code>.
-                        Untuk menambah admin baru, ubah field <code>role</code> user menjadi "admin" di Firestore
-                        Console.
+                        Selamat datang di Admin Panel. Kelola produk, member, dan transaksi dari sini.
                     </p>
                 </div>
             </div>
@@ -120,7 +155,7 @@
                         <tbody id="recentTransactions">
                             <tr>
                                 <td colspan="6" class="text-center text-muted" style="padding: 2rem;">
-                                    <i class="fas fa-spinner fa-spin"></i> Memuat...
+                                    Memuat data...
                                 </td>
                             </tr>
                         </tbody>
@@ -138,22 +173,44 @@
 
     <script>
         async function init() {
-            // Check auth and admin role
-            if (!await RouteGuard.requireAuth()) return;
-            if (!await RouteGuard.requireAdmin('/member/index.html')) return;
+            // Wait for Firebase auth state
+            const user = await Auth.getCurrentUser();
 
+            // Not logged in
+            if (!user) {
+                window.location.replace('/login.html');
+                return;
+            }
+
+            // Email not verified
+            if (!user.emailVerified) {
+                window.location.replace('/verify-email.html');
+                return;
+            }
+
+            // Check admin role
+            const userData = await Auth.getUserData(user.uid);
+            if (!userData || userData.role !== 'admin') {
+                alert('Akses ditolak. Anda bukan admin.');
+                window.location.replace('/member/index.html');
+                return;
+            }
+
+            // Auth passed - show dashboard
+            document.getElementById('authLoading').classList.add('hidden');
+            document.getElementById('dashboardContent').classList.add('visible');
+
+            // Load data
             await loadStats();
             await loadRecentTransactions();
         }
 
         async function loadStats() {
             try {
-                // Get counts
                 const productsSnap = await db.collection('products').get();
                 const membersSnap = await db.collection('users').where('role', '==', 'member').get();
                 const transactionsSnap = await db.collection('transactions').where('status', '==', 'paid').get();
 
-                // Calculate revenue
                 let revenue = 0;
                 transactionsSnap.forEach(doc => {
                     revenue += doc.data().amount || 0;
@@ -192,13 +249,6 @@
                 for (const doc of snapshot.docs) {
                     const tx = doc.data();
 
-                    // Get user and product info
-                    const userDoc = await db.collection('users').doc(tx.userId).get();
-                    const productDoc = await db.collection('products').doc(tx.productId).get();
-
-                    const userName = userDoc.exists ? userDoc.data().displayName || userDoc.data().email : 'Unknown';
-                    const productName = productDoc.exists ? productDoc.data().name : 'Unknown';
-
                     const statusBadge = {
                         'paid': 'badge-success',
                         'pending': 'badge-warning',
@@ -209,9 +259,9 @@
                     rows.push(`
                         <tr>
                             <td><code>${doc.id.substring(0, 8)}...</code></td>
-                            <td>${userName}</td>
-                            <td>${productName}</td>
-                            <td>${UI.formatCurrency(tx.amount)}</td>
+                            <td>${tx.userEmail || tx.userId?.substring(0, 8) || '-'}</td>
+                            <td>${tx.productName || tx.productId?.substring(0, 8) || '-'}</td>
+                            <td>${UI.formatCurrency(tx.amount || 0)}</td>
                             <td><span class="badge ${statusBadge}">${tx.status}</span></td>
                             <td>${tx.createdAt ? UI.formatDate(tx.createdAt) : '-'}</td>
                         </tr>
@@ -221,16 +271,10 @@
                 tbody.innerHTML = rows.join('');
             } catch (error) {
                 console.error('Error loading transactions:', error);
-                document.getElementById('recentTransactions').innerHTML = `
-                    <tr>
-                        <td colspan="6" class="text-center text-muted" style="padding: 2rem;">
-                            Error memuat data
-                        </td>
-                    </tr>
-                `;
             }
         }
 
+        // Start immediately
         init();
     </script>
 </body>
