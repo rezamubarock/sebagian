@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pengaturan | Admin Sebagian</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../style.css">
+</head>
+
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <a href="/" class="logo">Sebagian.</a>
+                <span class="badge badge-warning" style="margin-left: 0.5rem;">Admin</span>
+            </div>
+
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="/admin/index.html"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+                    <li><a href="/admin/products.html"><i class="fas fa-box"></i> Produk</a></li>
+                    <li><a href="/admin/members.html"><i class="fas fa-users"></i> Members</a></li>
+                    <li><a href="/admin/transactions.html"><i class="fas fa-receipt"></i> Transaksi</a></li>
+                    <li><a href="/admin/settings.html" class="active"><i class="fas fa-cog"></i> Pengaturan</a></li>
+                </ul>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button class="btn btn-danger btn-block btn-sm" onclick="Auth.logout()">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="dashboard-main">
+            <div class="dashboard-header">
+                <h1>Pengaturan Website</h1>
+                <p class="text-muted">Edit konten yang tampil di landing page</p>
+            </div>
+
+            <div class="grid-2" style="gap: 2rem; align-items: start;">
+                <!-- Site Content Settings -->
+                <div class="card">
+                    <h3 class="mb-3"><i class="fas fa-edit"></i> Konten Landing Page</h3>
+
+                    <form id="siteConfigForm">
+                        <div class="form-group">
+                            <label class="form-label">Hero Badge</label>
+                            <input type="text" class="form-input" id="hero_badge" placeholder="🚀 Platform #1...">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Hero Title (HTML diizinkan)</label>
+                            <input type="text" class="form-input" id="hero_title" placeholder="Tools Premium untuk...">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Hero Description</label>
+                            <textarea class="form-input" id="hero_desc" rows="3"
+                                placeholder="Deskripsi singkat..."></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Footer Text</label>
+                            <input type="text" class="form-input" id="footer_text" placeholder="© 2026 Sebagian...">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">WhatsApp Admin (untuk CTA)</label>
+                            <input type="text" class="form-input" id="whatsapp" placeholder="6281234567890">
+                        </div>
+
+                        <button type="submit" class="btn btn-primary" id="saveBtn">
+                            <i class="fas fa-save"></i> Simpan Perubahan
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Preview & Info -->
+                <div>
+                    <div class="card mb-3">
+                        <h3 class="mb-3"><i class="fas fa-eye"></i> Preview</h3>
+                        <div
+                            style="background: var(--bg-primary); padding: 2rem; border-radius: var(--radius-md); text-align: center;">
+                            <span class="hero-badge" id="preview_badge">Badge</span>
+                            <h2 id="preview_title" style="font-size: 1.5rem; margin-top: 1rem;">Title</h2>
+                            <p class="text-muted" id="preview_desc">Description</p>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="mb-3"><i class="fas fa-info-circle"></i> Panduan</h3>
+                        <ul style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.8;">
+                            <li>Perubahan akan langsung terlihat di landing page setelah disimpan.</li>
+                            <li>Untuk Hero Title, Anda bisa menggunakan tag HTML seperti
+                                <code>&lt;span class="gradient-text"&gt;</code></li>
+                            <li>WhatsApp digunakan untuk tombol "Chat Admin" di landing page.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="../app.js"></script>
+
+    <script>
+        async function init() {
+            if (!await RouteGuard.requireAuth()) return;
+            if (!await RouteGuard.requireAdmin('/member/index.html')) return;
+
+            await loadConfig();
+            setupLivePreview();
+        }
+
+        async function loadConfig() {
+            try {
+                const config = await SiteConfig.get();
+
+                document.getElementById('hero_badge').value = config.hero_badge || '🚀 Platform #1 untuk Digital Creator';
+                document.getElementById('hero_title').value = config.hero_title || 'Tools Premium untuk <span class="gradient-text">Sukses Digital</span>';
+                document.getElementById('hero_desc').value = config.hero_desc || '';
+                document.getElementById('footer_text').value = config.footer_text || '© 2026 Sebagian. All rights reserved.';
+                document.getElementById('whatsapp').value = config.whatsapp || '';
+
+                updatePreview();
+            } catch (error) {
+                console.error('Error loading config:', error);
+            }
+        }
+
+        function setupLivePreview() {
+            ['hero_badge', 'hero_title', 'hero_desc'].forEach(id => {
+                document.getElementById(id).addEventListener('input', updatePreview);
+            });
+        }
+
+        function updatePreview() {
+            document.getElementById('preview_badge').textContent = document.getElementById('hero_badge').value || 'Badge';
+            document.getElementById('preview_title').innerHTML = document.getElementById('hero_title').value || 'Title';
+            document.getElementById('preview_desc').textContent = document.getElementById('hero_desc').value || 'Description';
+        }
+
+        document.getElementById('siteConfigForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const btn = document.getElementById('saveBtn');
+            UI.setButtonLoading(btn, true);
+
+            const data = {
+                hero_badge: document.getElementById('hero_badge').value,
+                hero_title: document.getElementById('hero_title').value,
+                hero_desc: document.getElementById('hero_desc').value,
+                footer_text: document.getElementById('footer_text').value,
+                whatsapp: document.getElementById('whatsapp').value,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            try {
+                await SiteConfig.update(data);
+                alert('Berhasil disimpan!');
+            } catch (error) {
+                alert('Gagal menyimpan');
+                console.error(error);
+            }
+
+            UI.setButtonLoading(btn, false);
+        });
+
+        init();
+    </script>
+</body>
+
+</html>

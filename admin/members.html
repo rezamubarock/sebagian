@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kelola Members | Admin Sebagian</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../style.css">
+</head>
+
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <a href="/" class="logo">Sebagian.</a>
+                <span class="badge badge-warning" style="margin-left: 0.5rem;">Admin</span>
+            </div>
+
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="/admin/index.html"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+                    <li><a href="/admin/products.html"><i class="fas fa-box"></i> Produk</a></li>
+                    <li><a href="/admin/members.html" class="active"><i class="fas fa-users"></i> Members</a></li>
+                    <li><a href="/admin/transactions.html"><i class="fas fa-receipt"></i> Transaksi</a></li>
+                    <li><a href="/admin/settings.html"><i class="fas fa-cog"></i> Pengaturan</a></li>
+                </ul>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button class="btn btn-danger btn-block btn-sm" onclick="Auth.logout()">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="dashboard-main">
+            <div class="dashboard-header">
+                <h1>Kelola Members</h1>
+                <p class="text-muted">Lihat dan kelola semua member terdaftar</p>
+            </div>
+
+            <!-- Members Table -->
+            <div class="card">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Member</th>
+                                <th>Role</th>
+                                <th>Produk Dimiliki</th>
+                                <th>Terdaftar</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="membersTable">
+                            <tr>
+                                <td colspan="5" class="text-center text-muted" style="padding: 2rem;">
+                                    <i class="fas fa-spinner fa-spin"></i> Memuat...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="../app.js"></script>
+
+    <script>
+        let members = [];
+        let products = [];
+
+        async function init() {
+            if (!await RouteGuard.requireAuth()) return;
+            if (!await RouteGuard.requireAdmin('/member/index.html')) return;
+
+            // Load products for reference
+            const productsSnap = await db.collection('products').get();
+            products = productsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+            await loadMembers();
+        }
+
+        async function loadMembers() {
+            try {
+                const snapshot = await db.collection('users').orderBy('createdAt', 'desc').get();
+                members = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+                const tbody = document.getElementById('membersTable');
+
+                if (members.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="5" class="text-center text-muted" style="padding: 2rem;">
+                                Belum ada member terdaftar
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                tbody.innerHTML = members.map(m => {
+                    const purchasedCount = m.purchasedProducts?.length || 0;
+                    const roleBadge = m.role === 'admin' ? 'badge-warning' : 'badge-info';
+
+                    return `
+                        <tr>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 1rem;">
+                                    <div style="width: 40px; height: 40px; background: var(--gradient-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">
+                                        ${(m.displayName || m.email || '?')[0].toUpperCase()}
+                                    </div>
+                                    <div>
+                                        <strong>${m.displayName || 'No Name'}</strong>
+                                        <div class="text-muted" style="font-size: 0.8rem;">${m.email}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><span class="badge ${roleBadge}">${m.role || 'member'}</span></td>
+                            <td>${purchasedCount} produk</td>
+                            <td>${m.createdAt ? UI.formatDate(m.createdAt) : '-'}</td>
+                            <td>
+                                <button class="btn btn-secondary btn-sm" onclick="viewMember('${m.id}')" title="Lihat Detail">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-primary btn-sm" onclick="grantProduct('${m.id}')" title="Berikan Produk">
+                                    <i class="fas fa-gift"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Error loading members:', error);
+            }
+        }
+
+        function viewMember(id) {
+            const member = members.find(m => m.id === id);
+            if (!member) return;
+
+            const purchasedNames = (member.purchasedProducts || []).map(pid => {
+                const product = products.find(p => p.id === pid);
+                return product ? product.name : pid;
+            }).join(', ') || 'Belum ada';
+
+            alert(`
+Member: ${member.displayName || member.email}
+Email: ${member.email}
+Role: ${member.role}
+Produk: ${purchasedNames}
+Terdaftar: ${member.createdAt ? UI.formatDate(member.createdAt) : '-'}
+            `.trim());
+        }
+
+        async function grantProduct(memberId) {
+            const member = members.find(m => m.id === memberId);
+            if (!member) return;
+
+            // Get available products (not already owned)
+            const availableProducts = products.filter(p =>
+                !member.purchasedProducts?.includes(p.id)
+            );
+
+            if (availableProducts.length === 0) {
+                alert('Member ini sudah memiliki semua produk!');
+                return;
+            }
+
+            const productList = availableProducts.map((p, i) => `${i + 1}. ${p.name}`).join('\n');
+            const choice = prompt(`Pilih produk untuk diberikan ke ${member.displayName || member.email}:\n\n${productList}\n\nMasukkan nomor:`);
+
+            if (!choice) return;
+
+            const index = parseInt(choice) - 1;
+            if (isNaN(index) || index < 0 || index >= availableProducts.length) {
+                alert('Pilihan tidak valid');
+                return;
+            }
+
+            const selectedProduct = availableProducts[index];
+
+            try {
+                await db.collection('users').doc(memberId).update({
+                    purchasedProducts: firebase.firestore.FieldValue.arrayUnion(selectedProduct.id)
+                });
+
+                alert(`Berhasil! Produk "${selectedProduct.name}" diberikan ke ${member.displayName || member.email}`);
+                await loadMembers();
+            } catch (error) {
+                alert('Gagal memberikan produk');
+                console.error(error);
+            }
+        }
+
+        init();
+    </script>
+</body>
+
+</html>

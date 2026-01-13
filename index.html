@@ -4,185 +4,295 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sebagian | Official Site</title>
-    <meta name="description" content="Sebagian - Menghadirkan inovasi digital dengan sentuhan estetika premium.">
+    <title>Sebagian - Platform Tools Digital Premium</title>
+    <meta name="description"
+        content="Akses berbagai tools dan software premium untuk meningkatkan produktivitas bisnis Anda.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-    <div class="background-glob"></div>
-    <div class="background-glob-2"></div>
-
-    <nav class="glass-nav">
-        <div class="logo">Sebagian.</div>
-        <ul class="nav-links">
-            <li><a href="index.html">Home</a></li>
-            <li><a href="about.html">About</a></li>
-            <li><a href="services.html">Services</a></li>
-            <li><a href="contact.html">Contact</a></li>
-        </ul>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container flex-between">
+            <a href="/" class="logo">Sebagian.</a>
+            <ul class="nav-links">
+                <li><a href="#features">Fitur</a></li>
+                <li><a href="#products">Produk</a></li>
+                <li><a href="#pricing">Harga</a></li>
+                <li><a href="#testimonials">Testimoni</a></li>
+            </ul>
+            <div class="nav-actions">
+                <a href="login.html" class="btn btn-secondary btn-sm">Masuk</a>
+                <a href="register.html" class="btn btn-primary btn-sm">Daftar</a>
+            </div>
+        </div>
     </nav>
 
-    <main id="home">
-        <!-- HERO SECTION -->
-        <div class="hero-container container" style="padding-top: 150px; min-height: 90vh;">
-            <div class="glass-card fade-in-up" style="max-width: 1000px; margin: 0 auto;">
-                <span class="tag">#1 AI Creative Tool in Indonesia</span>
-                <h1 id="hero-title">Revolusi Konten <br> <span class="gradient-text">Tanpa Batas</span></h1>
-                <p id="hero-desc">Platform All-in-One untuk Affiliate & Creator. Buat Foto Produk Realistis, Video
-                    Viral, dan Copywriting dalam hitungan detik.</p>
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-bg"></div>
+        <div class="hero-content">
+            <span class="hero-badge" id="hero-badge">🚀 Platform #1 untuk Digital Creator</span>
+            <h1 id="hero-title">Tools Premium untuk <span class="gradient-text">Sukses Digital</span></h1>
+            <p id="hero-desc">Akses koleksi lengkap tools AI, software, dan resources yang akan meningkatkan
+                produktivitas dan penghasilan Anda 10x lipat.</p>
+            <div class="hero-cta">
+                <a href="#products" class="btn btn-primary btn-lg">Lihat Produk <i class="fas fa-arrow-right"></i></a>
+                <a href="#features" class="btn btn-secondary btn-lg">Pelajari Fitur</a>
+            </div>
+        </div>
+    </section>
 
-                <div class="cta-group">
-                    <button class="btn-primary" onclick="window.location.href='#pricing'">
-                        Mulai Sekarang ⚡
-                    </button>
-                    <button class="btn-secondary" onclick="window.location.href='#features'">Pelajari Fiturnya</button>
+    <!-- Features Section -->
+    <section id="features" class="section">
+        <div class="container">
+            <div class="text-center mb-4">
+                <h2>Kenapa <span class="gradient-text">Sebagian?</span></h2>
+                <p class="text-muted" style="max-width: 600px; margin: 1rem auto;">Platform all-in-one dengan berbagai
+                    keunggulan untuk membantu bisnis digital Anda.</p>
+            </div>
+
+            <div class="grid-3">
+                <div class="card feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <h3>Akses Instan</h3>
+                    <p>Langsung gunakan semua tools setelah pembayaran. Tidak perlu menunggu aktivasi manual.</p>
+                </div>
+
+                <div class="card feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-infinity"></i>
+                    </div>
+                    <h3>Lifetime Access</h3>
+                    <p>Bayar sekali, gunakan selamanya. Termasuk semua update dan fitur baru di masa depan.</p>
+                </div>
+
+                <div class="card feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-headset"></i>
+                    </div>
+                    <h3>Support Premium</h3>
+                    <p>Tim support kami siap membantu 24/7. Dapatkan bantuan langsung via WhatsApp.</p>
                 </div>
             </div>
         </div>
+    </section>
 
-        <!-- FEATURE SECTION 1: IMAGE GEN (MIA Equivalent) -->
-        <section id="features" class="container" style="padding-top: 100px;">
-            <div class="grid-2">
-                <div style="text-align: left;">
-                    <span class="tag">AI Image Generator</span>
-                    <h2 class="section-title" style="text-align: left; font-size: 3rem; margin-bottom: 1.5rem;">Buat
-                        Foto Produk <br><span class="gradient-text">Tanpa Studio</span></h2>
-                    <p class="prose" style="font-size: 1.2rem;">Lupakan biaya fotografer mahal. Cukup upload foto produk
-                        mentah, dan AI kami akan menempatkannya di manapun—meja estetik, tangan model, atau pemandangan
-                        alam.</p>
-                    <ul style="list-style: none; margin-bottom: 2rem;">
-                        <li
-                            style="margin-bottom: 1rem; display: flex; align-items: center; gap: 10px; font-size: 1.1rem;">
-                            <i class="fas fa-check-circle" style="color: var(--accent-1);"></i> Tanpa Perlu API Key
-                            Sendiri</li>
-                        <li
-                            style="margin-bottom: 1rem; display: flex; align-items: center; gap: 10px; font-size: 1.1rem;">
-                            <i class="fas fa-check-circle" style="color: var(--accent-1);"></i> 4 Mode: B-Roll, UGC,
-                            Flatlay, Store</li>
-                        <li
-                            style="margin-bottom: 1rem; display: flex; align-items: center; gap: 10px; font-size: 1.1rem;">
-                            <i class="fas fa-check-circle" style="color: var(--accent-1);"></i> Resolusi 4K Ultra HD
-                        </li>
-                    </ul>
-                    <button class="btn-secondary">Lihat Demo</button>
-                </div>
-                <!-- Visual Placeholder -->
-                <div class="glass-card"
-                    style="padding: 0; overflow: hidden; height: 400px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.3);">
-                    <i class="fas fa-magic" style="font-size: 5rem; color: var(--accent-2); opacity: 0.5;"></i>
+    <!-- Products Section -->
+    <section id="products" class="section" style="background: var(--bg-secondary);">
+        <div class="container">
+            <div class="text-center mb-4">
+                <h2>Produk <span class="gradient-text">Unggulan</span></h2>
+                <p class="text-muted" style="max-width: 600px; margin: 1rem auto;">Tools dan software terbaik yang sudah
+                    terbukti membantu ribuan pengguna.</p>
+            </div>
+
+            <div class="grid-3" id="products-grid">
+                <!-- Products will be loaded dynamically from Firestore -->
+                <div class="card text-center" style="padding: 3rem;">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--accent-primary);"></i>
+                    <p class="text-muted mt-2">Memuat produk...</p>
                 </div>
             </div>
-        </section>
+        </div>
+    </section>
 
-        <!-- FEATURE SECTION 2: VIDEO GEN (EVA Equivalent) -->
-        <section class="container" style="padding-top: 150px;">
-            <div class="grid-2" style="direction: rtl;"> <!-- Reverse layout -->
-                <div style="text-align: left; direction: ltr;">
-                    <span class="tag" style="border-color: var(--accent-3); color: var(--accent-3);">AI Video
-                        Animator</span>
-                    <h2 class="section-title" style="text-align: left; font-size: 3rem; margin-bottom: 1.5rem;">Gambar
-                        Statis Jadi <br><span class="gradient-text"
-                            style="background: linear-gradient(to right, var(--accent-3), var(--accent-2)); -webkit-background-clip: text;">Video
-                            Viral</span></h2>
-                    <p class="prose" style="font-size: 1.2rem;">Konten video 10x lebih menarik daripada gambar diam.
-                        Hidupkan foto produk Anda menjadi video animasi yang memikat algoritma TikTok & Reels.</p>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem;">
-                        <div style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 12px;">
-                            <h4 style="color: var(--accent-3); margin-bottom: 0.5rem;">5+ AI Engines</h4>
-                            <small>Akses model video AI terbaik kelas dunia.</small>
-                        </div>
-                        <div style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 12px;">
-                            <h4 style="color: var(--accent-3); margin-bottom: 0.5rem;">No Watermark</h4>
-                            <small>Hasil bersih profesional siap posting.</small>
-                        </div>
-                    </div>
-                    <button class="btn-primary"
-                        style="background: linear-gradient(135deg, var(--accent-3), var(--accent-2));">Coba Gerakkan
-                        Foto</button>
-                </div>
-                <!-- Visual Placeholder -->
-                <div class="glass-card"
-                    style="padding: 0; overflow: hidden; height: 400px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.3); direction: ltr;">
-                    <i class="fas fa-video" style="font-size: 5rem; color: var(--accent-3); opacity: 0.5;"></i>
-                </div>
+    <!-- Pricing Section -->
+    <section id="pricing" class="section">
+        <div class="container">
+            <div class="text-center mb-4">
+                <h2>Pilih <span class="gradient-text">Paket Anda</span></h2>
+                <p class="text-muted" style="max-width: 600px; margin: 1rem auto;">Investasi terbaik untuk masa depan
+                    bisnis digital Anda.</p>
             </div>
-        </section>
-
-        <!-- PRICING SECTION -->
-        <section id="pricing" class="container" style="padding-top: 150px; padding-bottom: 100px;">
-            <h2 class="section-title">Pilih Paket <span class="gradient-text">Investasi</span></h2>
-            <p style="text-align: center; margin-bottom: 4rem; color: var(--text-secondary);">Mulai gratis, upgrade saat
-                Anda siap berkembang.</p>
 
             <div class="grid-3" id="pricing-grid">
-                <!-- Pricing Card 1 -->
-                <div class="glass-card" style="padding: 2rem; position: relative;">
-                    <h3 style="font-size: 1.5rem; margin-bottom: 0.5rem;">Starter</h3>
-                    <div style="font-size: 3rem; font-weight: 800; margin-bottom: 1rem;">Free</div>
-                    <p style="font-size: 0.9rem; margin-bottom: 2rem;">Untuk yang baru coba-coba.</p>
-                    <ul style="text-align: left; list-style: none; margin-bottom: 2rem; color: var(--text-secondary);">
-                        <li style="margin-bottom: 0.8rem;"><i class="fas fa-check"
-                                style="color: var(--accent-1); margin-right: 8px;"></i> 5 Kredit Harian</li>
-                        <li style="margin-bottom: 0.8rem;"><i class="fas fa-check"
-                                style="color: var(--accent-1); margin-right: 8px;"></i> Akses Basic Engine</li>
-                        <li style="margin-bottom: 0.8rem;"><i class="fas fa-check"
-                                style="color: var(--accent-1); margin-right: 8px;"></i> Komunitas Support</li>
+                <!-- Will be populated from products with different pricing -->
+                <div class="card pricing-card">
+                    <h3>Starter</h3>
+                    <div class="pricing-price">Gratis</div>
+                    <p class="pricing-period">Untuk mencoba</p>
+                    <ul class="pricing-features">
+                        <li><i class="fas fa-check icon-check"></i> Akses 1 Tool Gratis</li>
+                        <li><i class="fas fa-check icon-check"></i> Fitur Terbatas</li>
+                        <li><i class="fas fa-check icon-check"></i> Community Support</li>
                     </ul>
-                    <button class="btn-secondary" style="width: 100%;">Daftar Gratis</button>
+                    <a href="register.html" class="btn btn-secondary btn-block">Daftar Gratis</a>
                 </div>
 
-                <!-- Pricing Card 2 (Highlight) -->
-                <div class="glass-card"
-                    style="padding: 2rem; border-color: var(--accent-1); transform: scale(1.05); position: relative; z-index: 10;">
-                    <span
-                        style="position: absolute; top: 0; left: 50%; transform: translate(-50%, -50%); background: var(--accent-1); padding: 5px 15px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; text-transform: uppercase;">Most
-                        Popular</span>
-                    <h3 style="font-size: 1.5rem; margin-bottom: 0.5rem; color: var(--accent-1);">Creator Pro</h3>
-                    <div style="font-size: 3rem; font-weight: 800; margin-bottom: 1rem;">179rb</div>
-                    <p style="font-size: 0.9rem; margin-bottom: 2rem;">Investasi sekali untuk selamanya.</p>
-                    <ul style="text-align: left; list-style: none; margin-bottom: 2rem; color: var(--text-primary);">
-                        <li style="margin-bottom: 0.8rem;"><i class="fas fa-check"
-                                style="color: var(--accent-1); margin-right: 8px;"></i> <strong>Unlimited</strong>
-                            Generate (MIA)</li>
-                        <li style="margin-bottom: 0.8rem;"><i class="fas fa-check"
-                                style="color: var(--accent-1); margin-right: 8px;"></i> 100 Video Token / Bulan</li>
-                        <li style="margin-bottom: 0.8rem;"><i class="fas fa-check"
-                                style="color: var(--accent-1); margin-right: 8px;"></i> <strong>Bonus E-Course</strong>
-                            Eksklusif</li>
-                        <li style="margin-bottom: 0.8rem;"><i class="fas fa-check"
-                                style="color: var(--accent-1); margin-right: 8px;"></i> Prioritas Support</li>
+                <div class="card pricing-card card-highlight">
+                    <span class="pricing-badge">Popular</span>
+                    <h3>Pro Bundle</h3>
+                    <div class="pricing-price">Rp 299rb</div>
+                    <p class="pricing-period">Bayar sekali, akses selamanya</p>
+                    <ul class="pricing-features">
+                        <li><i class="fas fa-check icon-check"></i> <strong>Semua Tools</strong> Premium</li>
+                        <li><i class="fas fa-check icon-check"></i> Lifetime Updates</li>
+                        <li><i class="fas fa-check icon-check"></i> Priority Support</li>
+                        <li><i class="fas fa-check icon-check"></i> Bonus E-Course</li>
                     </ul>
-                    <button class="btn-primary" style="width: 100%; box-shadow: var(--glow-primary);">Beli Sekarang
-                        🔥</button>
+                    <a href="register.html" class="btn btn-primary btn-block">Beli Sekarang</a>
                 </div>
 
-                <!-- Pricing Card 3 -->
-                <div class="glass-card" style="padding: 2rem;">
-                    <h3 style="font-size: 1.5rem; margin-bottom: 0.5rem;">Enterprise</h3>
-                    <div style="font-size: 3rem; font-weight: 800; margin-bottom: 1rem;">Custom</div>
-                    <p style="font-size: 0.9rem; margin-bottom: 2rem;">Untuk kebutuhan skala besar.</p>
-                    <ul style="text-align: left; list-style: none; margin-bottom: 2rem; color: var(--text-secondary);">
-                        <li style="margin-bottom: 0.8rem;"><i class="fas fa-check"
-                                style="color: var(--accent-1); margin-right: 8px;"></i> API Access</li>
-                        <li style="margin-bottom: 0.8rem;"><i class="fas fa-check"
-                                style="color: var(--accent-1); margin-right: 8px;"></i> Dedicated Server</li>
-                        <li style="margin-bottom: 0.8rem;"><i class="fas fa-check"
-                                style="color: var(--accent-1); margin-right: 8px;"></i> White Label Option</li>
+                <div class="card pricing-card">
+                    <h3>Enterprise</h3>
+                    <div class="pricing-price">Custom</div>
+                    <p class="pricing-period">Untuk tim & bisnis</p>
+                    <ul class="pricing-features">
+                        <li><i class="fas fa-check icon-check"></i> Multi-user License</li>
+                        <li><i class="fas fa-check icon-check"></i> API Access</li>
+                        <li><i class="fas fa-check icon-check"></i> Dedicated Support</li>
                     </ul>
-                    <button class="btn-secondary" style="width: 100%;">Hubungi Sales</button>
+                    <a href="https://wa.me/6281234567890" class="btn btn-secondary btn-block">Hubungi Sales</a>
                 </div>
             </div>
-        </section>
+        </div>
+    </section>
 
-        <footer>
-            <p id="footer-text">&copy; 2026 Sebagian Inc. Dibuat dengan <span class="heart">♥</span> di Indonesia.</p>
-        </footer>
+    <!-- Testimonials Section -->
+    <section id="testimonials" class="section" style="background: var(--bg-secondary);">
+        <div class="container">
+            <div class="text-center mb-4">
+                <h2>Apa Kata <span class="gradient-text">Mereka?</span></h2>
+                <p class="text-muted" style="max-width: 600px; margin: 1rem auto;">Ribuan pengguna sudah merasakan
+                    manfaat tools kami.</p>
+            </div>
 
-        <script src="script.js"></script>
+            <div class="grid-3" id="testimonials-grid">
+                <div class="card testimonial-card">
+                    <p class="testimonial-text">"Produktivitas kerja saya naik 3x lipat sejak pakai tools dari Sebagian.
+                        Worth every penny!"</p>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar">A</div>
+                        <div>
+                            <div class="testimonial-name">Andi Pratama</div>
+                            <div class="testimonial-role">Content Creator</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card testimonial-card">
+                    <p class="testimonial-text">"Support-nya luar biasa responsif. Setiap ada kendala langsung dibantu.
+                        Recommended!"</p>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar">S</div>
+                        <div>
+                            <div class="testimonial-name">Sari Dewi</div>
+                            <div class="testimonial-role">Digital Marketer</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card testimonial-card">
+                    <p class="testimonial-text">"Lifetime access adalah keputusan terbaik. Update terus datang tanpa
+                        bayar lagi!"</p>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar">B</div>
+                        <div>
+                            <div class="testimonial-name">Budi Santoso</div>
+                            <div class="testimonial-role">Freelancer</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="section">
+        <div class="container">
+            <div class="card text-center" style="padding: 4rem; max-width: 800px; margin: 0 auto;">
+                <h2 class="mb-2">Siap untuk <span class="gradient-text">Memulai?</span></h2>
+                <p class="text-muted mb-4">Bergabung dengan ribuan pengguna yang sudah sukses dengan tools kami.</p>
+                <div class="hero-cta">
+                    <a href="register.html" class="btn btn-primary btn-lg">Daftar Sekarang <i
+                            class="fas fa-arrow-right"></i></a>
+                    <a href="https://wa.me/6281234567890" class="btn btn-secondary btn-lg"><i
+                            class="fab fa-whatsapp"></i> Chat Admin</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p id="footer-text">&copy; 2026 Sebagian. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="app.js"></script>
+
+    <script>
+        // Load dynamic content from Firestore
+        async function loadContent() {
+            try {
+                // Load site config
+                const config = await SiteConfig.get();
+                if (config.hero_title) document.getElementById('hero-title').innerHTML = config.hero_title;
+                if (config.hero_desc) document.getElementById('hero-desc').textContent = config.hero_desc;
+                if (config.footer_text) document.getElementById('footer-text').textContent = config.footer_text;
+
+                // Load products
+                const products = await Products.getAll();
+                const productsGrid = document.getElementById('products-grid');
+
+                if (products.length > 0) {
+                    productsGrid.innerHTML = products.map(product => `
+                        <div class="card" style="padding: 0; overflow: hidden;">
+                            <div style="height: 200px; background: var(--gradient-primary); display: flex; align-items: center; justify-content: center;">
+                                ${product.imageUrl
+                            ? `<img src="${product.imageUrl}" alt="${product.name}" style="width: 100%; height: 100%; object-fit: cover;">`
+                            : `<i class="fas fa-box" style="font-size: 3rem; color: white;"></i>`
+                        }
+                            </div>
+                            <div style="padding: 1.5rem;">
+                                <span class="badge ${product.type === 'web_tool' ? 'badge-info' : 'badge-success'}" style="margin-bottom: 0.75rem;">
+                                    ${product.type === 'web_tool' ? 'Web Tool' : 'Software'}
+                                </span>
+                                <h3 style="margin-bottom: 0.5rem;">${product.name}</h3>
+                                <p class="text-muted" style="font-size: 0.9rem; margin-bottom: 1rem;">${product.description?.substring(0, 100)}...</p>
+                                <div class="flex-between">
+                                    <span style="font-size: 1.25rem; font-weight: 700;">${UI.formatCurrency(product.price)}</span>
+                                    <a href="register.html" class="btn btn-primary btn-sm">Beli</a>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    productsGrid.innerHTML = `
+                        <div class="card text-center" style="grid-column: 1 / -1; padding: 3rem;">
+                            <i class="fas fa-box-open" style="font-size: 3rem; color: var(--text-muted); margin-bottom: 1rem;"></i>
+                            <p class="text-muted">Belum ada produk. Segera hadir!</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.log('Using static content:', error);
+            }
+        }
+
+        loadContent();
+
+        // Update nav if logged in
+        Auth.getCurrentUser().then(user => {
+            if (user) {
+                document.querySelector('.nav-actions').innerHTML = `
+                    <a href="/member/index.html" class="btn btn-primary btn-sm">Dashboard</a>
+                `;
+            }
+        });
+    </script>
 </body>
 
 </html>

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaksi | Admin Sebagian</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../style.css">
+</head>
+
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <a href="/" class="logo">Sebagian.</a>
+                <span class="badge badge-warning" style="margin-left: 0.5rem;">Admin</span>
+            </div>
+
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="/admin/index.html"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+                    <li><a href="/admin/products.html"><i class="fas fa-box"></i> Produk</a></li>
+                    <li><a href="/admin/members.html"><i class="fas fa-users"></i> Members</a></li>
+                    <li><a href="/admin/transactions.html" class="active"><i class="fas fa-receipt"></i> Transaksi</a>
+                    </li>
+                    <li><a href="/admin/settings.html"><i class="fas fa-cog"></i> Pengaturan</a></li>
+                </ul>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button class="btn btn-danger btn-block btn-sm" onclick="Auth.logout()">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="dashboard-main">
+            <div class="dashboard-header flex-between">
+                <div>
+                    <h1>Transaksi</h1>
+                    <p class="text-muted">Kelola semua transaksi pembayaran</p>
+                </div>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button class="btn btn-secondary btn-sm" onclick="filterStatus('all')">Semua</button>
+                    <button class="btn btn-warning btn-sm" onclick="filterStatus('pending')">Pending</button>
+                    <button class="btn btn-success btn-sm" onclick="filterStatus('paid')">Paid</button>
+                </div>
+            </div>
+
+            <!-- Transactions Table -->
+            <div class="card">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>User</th>
+                                <th>Produk</th>
+                                <th>Jumlah</th>
+                                <th>Metode</th>
+                                <th>Status</th>
+                                <th>Tanggal</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactionsTable">
+                            <tr>
+                                <td colspan="8" class="text-center text-muted" style="padding: 2rem;">
+                                    <i class="fas fa-spinner fa-spin"></i> Memuat...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="../app.js"></script>
+
+    <script>
+        let transactions = [];
+        let currentFilter = 'all';
+
+        async function init() {
+            if (!await RouteGuard.requireAuth()) return;
+            if (!await RouteGuard.requireAdmin('/member/index.html')) return;
+
+            await loadTransactions();
+        }
+
+        async function loadTransactions() {
+            try {
+                let query = db.collection('transactions').orderBy('createdAt', 'desc');
+
+                if (currentFilter !== 'all') {
+                    query = query.where('status', '==', currentFilter);
+                }
+
+                const snapshot = await query.limit(100).get();
+                transactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+                await renderTable();
+            } catch (error) {
+                console.error('Error loading transactions:', error);
+            }
+        }
+
+        async function renderTable() {
+            const tbody = document.getElementById('transactionsTable');
+
+            if (transactions.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center text-muted" style="padding: 2rem;">
+                            Tidak ada transaksi${currentFilter !== 'all' ? ` dengan status "${currentFilter}"` : ''}
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            const rows = [];
+            for (const tx of transactions) {
+                // Get user and product info
+                const userDoc = await db.collection('users').doc(tx.userId).get();
+                const productDoc = await db.collection('products').doc(tx.productId).get();
+
+                const userName = userDoc.exists ? (userDoc.data().displayName || userDoc.data().email) : 'Unknown';
+                const productName = productDoc.exists ? productDoc.data().name : 'Unknown';
+
+                const statusBadge = {
+                    'paid': 'badge-success',
+                    'pending': 'badge-warning',
+                    'manual_pending': 'badge-info',
+                    'failed': 'badge-danger'
+                }[tx.status] || 'badge-info';
+
+                const methodLabel = {
+                    'midtrans': 'Midtrans',
+                    'manual': 'Manual Transfer'
+                }[tx.paymentMethod] || tx.paymentMethod;
+
+                rows.push(`
+                    <tr>
+                        <td><code style="font-size: 0.75rem;">${tx.id.substring(0, 10)}...</code></td>
+                        <td>${userName}</td>
+                        <td>${productName}</td>
+                        <td>${UI.formatCurrency(tx.amount)}</td>
+                        <td>${methodLabel}</td>
+                        <td><span class="badge ${statusBadge}">${tx.status}</span></td>
+                        <td>${tx.createdAt ? UI.formatDate(tx.createdAt) : '-'}</td>
+                        <td>
+                            ${tx.status === 'pending' || tx.status === 'manual_pending' ? `
+                                <button class="btn btn-success btn-sm" onclick="confirmPayment('${tx.id}')" title="Konfirmasi">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                <button class="btn btn-danger btn-sm" onclick="rejectPayment('${tx.id}')" title="Tolak">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            ` : '-'}
+                        </td>
+                    </tr>
+                `);
+            }
+
+            tbody.innerHTML = rows.join('');
+        }
+
+        function filterStatus(status) {
+            currentFilter = status;
+            loadTransactions();
+        }
+
+        async function confirmPayment(txId) {
+            if (!confirm('Konfirmasi pembayaran ini? Member akan mendapat akses produk.')) return;
+
+            try {
+                const txDoc = await db.collection('transactions').doc(txId).get();
+                const tx = txDoc.data();
+
+                // Update transaction status
+                await db.collection('transactions').doc(txId).update({
+                    status: 'paid',
+                    paidAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                // Grant product to user
+                await db.collection('users').doc(tx.userId).update({
+                    purchasedProducts: firebase.firestore.FieldValue.arrayUnion(tx.productId)
+                });
+
+                alert('Pembayaran dikonfirmasi! Member sudah dapat akses produk.');
+                await loadTransactions();
+            } catch (error) {
+                alert('Gagal mengkonfirmasi pembayaran');
+                console.error(error);
+            }
+        }
+
+        async function rejectPayment(txId) {
+            if (!confirm('Tolak pembayaran ini?')) return;
+
+            try {
+                await db.collection('transactions').doc(txId).update({
+                    status: 'failed'
+                });
+
+                alert('Pembayaran ditolak.');
+                await loadTransactions();
+            } catch (error) {
+                alert('Gagal menolak pembayaran');
+                console.error(error);
+            }
+        }
+
+        init();
+    </script>
+</body>
+
+</html>

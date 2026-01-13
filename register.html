@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daftar | Sebagian</title>
+    <meta name="description" content="Buat akun Sebagian untuk mengakses tools premium.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="hero-bg"></div>
+
+    <div class="auth-page">
+        <div class="card auth-card">
+            <div class="text-center mb-4">
+                <a href="/" class="logo" style="font-size: 2rem;">Sebagian.</a>
+            </div>
+
+            <h1 class="text-center">Buat Akun</h1>
+            <p class="subtitle text-center">Daftar untuk mengakses semua tools premium</p>
+
+            <form id="registerForm">
+                <div class="form-group">
+                    <label class="form-label">Nama Lengkap</label>
+                    <input type="text" class="form-input" id="displayName" placeholder="John Doe" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-input" id="email" placeholder="nama@email.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" class="form-input" id="password" placeholder="Minimal 6 karakter" required
+                        minlength="6">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Konfirmasi Password</label>
+                    <input type="password" class="form-input" id="confirmPassword" placeholder="Ulangi password"
+                        required>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block btn-lg" id="submitBtn">
+                    Daftar Sekarang
+                </button>
+            </form>
+
+            <div id="errorMessage" class="text-center mb-2 hidden"
+                style="color: var(--accent-danger); margin-top: 1rem;"></div>
+
+            <p class="auth-footer">
+                Sudah punya akun? <a href="login.html">Masuk</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="app.js"></script>
+
+    <script>
+        // Redirect if already logged in
+        RouteGuard.redirectIfLoggedIn();
+
+        const form = document.getElementById('registerForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const errorMessage = document.getElementById('errorMessage');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const displayName = document.getElementById('displayName').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            // Validate passwords match
+            if (password !== confirmPassword) {
+                errorMessage.textContent = 'Password tidak cocok.';
+                errorMessage.classList.remove('hidden');
+                return;
+            }
+
+            UI.setButtonLoading(submitBtn, true);
+            errorMessage.classList.add('hidden');
+
+            try {
+                // Create user in Firebase Auth
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+
+                // Update display name
+                await user.updateProfile({ displayName });
+
+                // Create user document in Firestore
+                await db.collection('users').doc(user.uid).set({
+                    uid: user.uid,
+                    email: email,
+                    displayName: displayName,
+                    role: 'member', // Default role
+                    purchasedProducts: [],
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                // Redirect to member dashboard
+                window.location.href = '/member/index.html';
+
+            } catch (error) {
+                console.error('Register error:', error);
+
+                let message = 'Terjadi kesalahan. Silakan coba lagi.';
+                if (error.code === 'auth/email-already-in-use') {
+                    message = 'Email sudah terdaftar. Silakan login.';
+                } else if (error.code === 'auth/invalid-email') {
+                    message = 'Format email tidak valid.';
+                } else if (error.code === 'auth/weak-password') {
+                    message = 'Password terlalu lemah. Minimal 6 karakter.';
+                }
+
+                errorMessage.textContent = message;
+                errorMessage.classList.remove('hidden');
+                UI.setButtonLoading(submitBtn, false);
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kelola Produk | Admin Sebagian</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.open {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            width: 100%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <a href="/" class="logo">Sebagian.</a>
+                <span class="badge badge-warning" style="margin-left: 0.5rem;">Admin</span>
+            </div>
+
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="/admin/index.html"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+                    <li><a href="/admin/products.html" class="active"><i class="fas fa-box"></i> Produk</a></li>
+                    <li><a href="/admin/members.html"><i class="fas fa-users"></i> Members</a></li>
+                    <li><a href="/admin/transactions.html"><i class="fas fa-receipt"></i> Transaksi</a></li>
+                    <li><a href="/admin/settings.html"><i class="fas fa-cog"></i> Pengaturan</a></li>
+                </ul>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button class="btn btn-danger btn-block btn-sm" onclick="Auth.logout()">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="dashboard-main">
+            <div class="dashboard-header flex-between">
+                <div>
+                    <h1>Kelola Produk</h1>
+                    <p class="text-muted">Tambah, edit, atau hapus produk</p>
+                </div>
+                <button class="btn btn-primary" onclick="openModal()">
+                    <i class="fas fa-plus"></i> Tambah Produk
+                </button>
+            </div>
+
+            <!-- Products Table -->
+            <div class="card">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Produk</th>
+                                <th>Tipe</th>
+                                <th>Harga</th>
+                                <th>Status</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productsTable">
+                            <tr>
+                                <td colspan="5" class="text-center text-muted" style="padding: 2rem;">
+                                    <i class="fas fa-spinner fa-spin"></i> Memuat...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add/Edit Product Modal -->
+    <div class="modal" id="productModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Tambah Produk</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+
+            <form id="productForm">
+                <input type="hidden" id="productId">
+
+                <div class="form-group">
+                    <label class="form-label">Nama Produk *</label>
+                    <input type="text" class="form-input" id="name" required placeholder="Contoh: AI Image Generator">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Deskripsi</label>
+                    <textarea class="form-input" id="description" rows="3"
+                        placeholder="Deskripsi singkat produk..."></textarea>
+                </div>
+
+                <div class="grid-2" style="gap: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label">Tipe *</label>
+                        <select class="form-input" id="type" required>
+                            <option value="web_tool">Web Tool (Akses URL)</option>
+                            <option value="software_download">Software (Download)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Harga (Rp) *</label>
+                        <input type="number" class="form-input" id="price" required placeholder="179000">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Model Pricing</label>
+                    <select class="form-input" id="pricingModel">
+                        <option value="lifetime">Lifetime (Sekali Bayar)</option>
+                        <option value="monthly">Bulanan</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="accessUrlGroup">
+                    <label class="form-label">URL Akses Tool</label>
+                    <input type="url" class="form-input" id="accessUrl" placeholder="https://tool.sebagian.com/...">
+                </div>
+
+                <div class="form-group hidden" id="downloadUrlGroup">
+                    <label class="form-label">URL Download</label>
+                    <input type="url" class="form-input" id="downloadUrl" placeholder="https://storage.../file.zip">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">URL Gambar (opsional)</label>
+                    <input type="url" class="form-input" id="imageUrl" placeholder="https://...">
+                </div>
+
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                        <input type="checkbox" id="isActive" checked>
+                        <span>Produk Aktif (tampil di website)</span>
+                    </label>
+                </div>
+
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="submit" class="btn btn-primary" id="submitBtn">Simpan</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Batal</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="../app.js"></script>
+
+    <script>
+        let products = [];
+
+        async function init() {
+            if (!await RouteGuard.requireAuth()) return;
+            if (!await RouteGuard.requireAdmin('/member/index.html')) return;
+
+            // Toggle URL fields based on type
+            document.getElementById('type').addEventListener('change', (e) => {
+                const isWebTool = e.target.value === 'web_tool';
+                document.getElementById('accessUrlGroup').classList.toggle('hidden', !isWebTool);
+                document.getElementById('downloadUrlGroup').classList.toggle('hidden', isWebTool);
+            });
+
+            await loadProducts();
+        }
+
+        async function loadProducts() {
+            try {
+                const snapshot = await db.collection('products').orderBy('createdAt', 'desc').get();
+                products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+                const tbody = document.getElementById('productsTable');
+
+                if (products.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="5" class="text-center text-muted" style="padding: 2rem;">
+                                Belum ada produk. Klik "Tambah Produk" untuk memulai.
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                tbody.innerHTML = products.map(p => `
+                    <tr>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <div style="width: 40px; height: 40px; background: var(--gradient-primary); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas ${p.type === 'web_tool' ? 'fa-globe' : 'fa-download'}" style="color: white;"></i>
+                                </div>
+                                <div>
+                                    <strong>${p.name}</strong>
+                                    <div class="text-muted" style="font-size: 0.8rem;">${p.description?.substring(0, 40) || 'No description'}...</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td><span class="badge ${p.type === 'web_tool' ? 'badge-info' : 'badge-success'}">${p.type === 'web_tool' ? 'Web Tool' : 'Software'}</span></td>
+                        <td>${UI.formatCurrency(p.price)}</td>
+                        <td><span class="badge ${p.isActive ? 'badge-success' : 'badge-danger'}">${p.isActive ? 'Aktif' : 'Nonaktif'}</span></td>
+                        <td>
+                            <button class="btn btn-secondary btn-sm" onclick="editProduct('${p.id}')" style="margin-right: 0.5rem;">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteProduct('${p.id}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading products:', error);
+            }
+        }
+
+        function openModal(product = null) {
+            document.getElementById('productModal').classList.add('open');
+            document.getElementById('modalTitle').textContent = product ? 'Edit Produk' : 'Tambah Produk';
+
+            if (product) {
+                document.getElementById('productId').value = product.id;
+                document.getElementById('name').value = product.name;
+                document.getElementById('description').value = product.description || '';
+                document.getElementById('type').value = product.type;
+                document.getElementById('price').value = product.price;
+                document.getElementById('pricingModel').value = product.pricingModel || 'lifetime';
+                document.getElementById('accessUrl').value = product.accessUrl || '';
+                document.getElementById('downloadUrl').value = product.downloadUrl || '';
+                document.getElementById('imageUrl').value = product.imageUrl || '';
+                document.getElementById('isActive').checked = product.isActive !== false;
+
+                // Toggle URL fields
+                const isWebTool = product.type === 'web_tool';
+                document.getElementById('accessUrlGroup').classList.toggle('hidden', !isWebTool);
+                document.getElementById('downloadUrlGroup').classList.toggle('hidden', isWebTool);
+            } else {
+                document.getElementById('productForm').reset();
+                document.getElementById('productId').value = '';
+                document.getElementById('isActive').checked = true;
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('productModal').classList.remove('open');
+        }
+
+        function editProduct(id) {
+            const product = products.find(p => p.id === id);
+            if (product) openModal(product);
+        }
+
+        async function deleteProduct(id) {
+            if (!confirm('Yakin ingin menghapus produk ini?')) return;
+
+            try {
+                await db.collection('products').doc(id).delete();
+                await loadProducts();
+            } catch (error) {
+                alert('Gagal menghapus produk');
+                console.error(error);
+            }
+        }
+
+        // Form submit
+        document.getElementById('productForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const btn = document.getElementById('submitBtn');
+            UI.setButtonLoading(btn, true);
+
+            const productId = document.getElementById('productId').value;
+            const data = {
+                name: document.getElementById('name').value,
+                description: document.getElementById('description').value,
+                type: document.getElementById('type').value,
+                price: parseInt(document.getElementById('price').value),
+                pricingModel: document.getElementById('pricingModel').value,
+                accessUrl: document.getElementById('accessUrl').value,
+                downloadUrl: document.getElementById('downloadUrl').value,
+                imageUrl: document.getElementById('imageUrl').value,
+                isActive: document.getElementById('isActive').checked,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            try {
+                if (productId) {
+                    // Update existing
+                    await db.collection('products').doc(productId).update(data);
+                } else {
+                    // Create new
+                    data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                    await db.collection('products').add(data);
+                }
+
+                closeModal();
+                await loadProducts();
+            } catch (error) {
+                alert('Gagal menyimpan produk');
+                console.error(error);
+            }
+
+            UI.setButtonLoading(btn, false);
+        });
+
+        init();
+    </script>
+</body>
+
+</html>
