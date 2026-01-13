@@ -76,6 +76,12 @@
                 const userCredential = await auth.signInWithEmailAndPassword(email, password);
                 const user = userCredential.user;
 
+                // Check if email is verified
+                if (!user.emailVerified) {
+                    window.location.href = '/verify-email.html';
+                    return;
+                }
+
                 // Check role and redirect
                 const userData = await Auth.getUserData(user.uid);
 

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verifikasi Email | Sebagian</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="hero-bg"></div>
+
+    <div class="auth-page">
+        <div class="card auth-card" style="max-width: 500px;">
+            <div class="text-center mb-4">
+                <a href="/" class="logo" style="font-size: 2rem;">Sebagian.</a>
+            </div>
+
+            <div class="text-center">
+                <div style="font-size: 4rem; margin-bottom: 1.5rem;">📧</div>
+                <h1>Verifikasi Email Anda</h1>
+                <p class="subtitle" style="margin-bottom: 2rem;">
+                    Kami telah mengirim email verifikasi ke <strong id="userEmail">email Anda</strong>.
+                    Silakan cek inbox (atau folder spam) dan klik link verifikasi.
+                </p>
+
+                <div id="statusMessage" class="mb-3"
+                    style="padding: 1rem; border-radius: var(--radius-md); background: rgba(124, 58, 237, 0.1); color: var(--accent-primary);">
+                    Menunggu verifikasi...
+                </div>
+
+                <button class="btn btn-secondary btn-block mb-2" id="resendBtn" onclick="resendEmail()">
+                    Kirim Ulang Email
+                </button>
+
+                <button class="btn btn-primary btn-block mb-3" id="checkBtn" onclick="checkVerification()">
+                    Saya Sudah Verifikasi
+                </button>
+
+                <p class="text-muted" style="font-size: 0.9rem;">
+                    Salah email? <a href="#" onclick="Auth.logout()" style="color: var(--accent-primary);">Logout &
+                        daftar ulang</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="app.js"></script>
+
+    <script>
+        let checkInterval;
+
+        async function init() {
+            const user = await Auth.getCurrentUser();
+
+            if (!user) {
+                // Not logged in
+                window.location.href = '/login.html';
+                return;
+            }
+
+            if (user.emailVerified) {
+                // Already verified
+                redirectToDashboard();
+                return;
+            }
+
+            // Show user email
+            document.getElementById('userEmail').textContent = user.email;
+
+            // Auto-check every 3 seconds
+            checkInterval = setInterval(checkVerification, 3000);
+        }
+
+        async function checkVerification() {
+            const user = auth.currentUser;
+            if (!user) return;
+
+            // Reload user to get latest emailVerified status
+            await user.reload();
+
+            if (user.emailVerified) {
+                clearInterval(checkInterval);
+                document.getElementById('statusMessage').innerHTML = '✅ Email terverifikasi! Mengalihkan...';
+                document.getElementById('statusMessage').style.background = 'rgba(34, 197, 94, 0.1)';
+                document.getElementById('statusMessage').style.color = 'var(--accent-success)';
+
+                setTimeout(redirectToDashboard, 1500);
+            }
+        }
+
+        async function redirectToDashboard() {
+            const isAdmin = await Auth.isAdmin();
+            window.location.href = isAdmin ? '/admin/index.html' : '/member/index.html';
+        }
+
+        async function resendEmail() {
+            const btn = document.getElementById('resendBtn');
+            UI.setButtonLoading(btn, true);
+
+            try {
+                const user = auth.currentUser;
+                if (user) {
+                    await user.sendEmailVerification();
+                    document.getElementById('statusMessage').innerHTML = '📨 Email verifikasi dikirim ulang!';
+                }
+            } catch (error) {
+                console.error('Resend error:', error);
+                if (error.code === 'auth/too-many-requests') {
+                    document.getElementById('statusMessage').innerHTML = '⚠️ Terlalu banyak permintaan. Coba lagi nanti.';
+                    document.getElementById('statusMessage').style.color = 'var(--accent-warning)';
+                }
+            }
+
+            UI.setButtonLoading(btn, false);
+        }
+
+        init();
+    </script>
+</body>
+
+</html>

@@ -78,8 +78,8 @@
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const displayName = document.getElementById('displayName').value;
-            const email = document.getElementById('email').value;
+            const displayName = document.getElementById('displayName').value.trim();
+            const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
 
@@ -98,8 +98,14 @@
                 const userCredential = await auth.createUserWithEmailAndPassword(email, password);
                 const user = userCredential.user;
 
+                console.log('User created:', user.uid);
+
                 // Update display name
                 await user.updateProfile({ displayName });
+
+                // Send email verification
+                await user.sendEmailVerification();
+                console.log('Verification email sent');
 
                 // Create user document in Firestore
                 await db.collection('users').doc(user.uid).set({
@@ -111,8 +117,10 @@
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
 
-                // Redirect to member dashboard
-                window.location.href = '/member/index.html';
+                console.log('User document created in Firestore');
+
+                // Redirect to verify email page
+                window.location.href = '/verify-email.html';
 
             } catch (error) {
                 console.error('Register error:', error);
@@ -124,6 +132,8 @@
                     message = 'Format email tidak valid.';
                 } else if (error.code === 'auth/weak-password') {
                     message = 'Password terlalu lemah. Minimal 6 karakter.';
+                } else {
+                    message = error.message;
                 }
 
                 errorMessage.textContent = message;

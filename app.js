@@ -1,8 +1,6 @@
 // ========================================
 // FIREBASE CONFIGURATION
 // ========================================
-// PENTING: Ganti nilai-nilai di bawah dengan konfigurasi Firebase project kamu sendiri
-// Dapatkan dari: Firebase Console > Project Settings > Your apps > Web app
 
 const firebaseConfig = {
     apiKey: "AIzaSyDnehs_q4onSxnzfqRrK-yS8IaK48ep2dk",
@@ -26,17 +24,25 @@ const storage = firebase.storage();
 // ========================================
 
 const Auth = {
-    // Get current user
+    // Get current user (waits for auth state to be determined)
     getCurrentUser: () => {
         return new Promise((resolve) => {
-            auth.onAuthStateChanged(user => resolve(user));
+            const unsubscribe = auth.onAuthStateChanged(user => {
+                unsubscribe(); // Stop listening after first result
+                resolve(user);
+            });
         });
     },
 
     // Get user data from Firestore
     getUserData: async (uid) => {
-        const doc = await db.collection('users').doc(uid).get();
-        return doc.exists ? doc.data() : null;
+        try {
+            const doc = await db.collection('users').doc(uid).get();
+            return doc.exists ? doc.data() : null;
+        } catch (error) {
+            console.error('Error getting user data:', error);
+            return null;
+        }
     },
 
     // Check if current user is admin
@@ -51,21 +57,67 @@ const Auth = {
     logout: async () => {
         await auth.signOut();
         window.location.href = '/login.html';
+    },
+
+    // Send email verification
+    sendVerification: async () => {
+        const user = auth.currentUser;
+        if (user && !user.emailVerified) {
+            await user.sendEmailVerification();
+        }
     }
 };
 
 // ========================================
-// ROUTE PROTECTION
+// ROUTE PROTECTION (BLOCKING)
 // ========================================
 
 const RouteGuard = {
-    // Require user to be logged in
+    // Show loading overlay while checking auth
+    _showLoading: () => {
+        // Create loading overlay if not exists
+        if (!document.getElementById('auth-loading')) {
+            const overlay = document.createElement('div');
+            overlay.id = 'auth-loading';
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0; left: 0; right: 0; bottom: 0;
+                background: #0a0a0a;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 9999;
+                color: white;
+                font-family: Inter, sans-serif;
+            `;
+            overlay.innerHTML = '<div style="text-align: center;"><div style="font-size: 2rem; margin-bottom: 1rem;">⏳</div>Memverifikasi akun...</div>';
+            document.body.prepend(overlay);
+        }
+    },
+
+    _hideLoading: () => {
+        const overlay = document.getElementById('auth-loading');
+        if (overlay) overlay.remove();
+    },
+
+    // Require user to be logged in AND email verified
     requireAuth: async (redirectTo = '/login.html') => {
+        RouteGuard._showLoading();
+
         const user = await Auth.getCurrentUser();
+
         if (!user) {
             window.location.href = redirectTo;
             return false;
         }
+
+        // Check email verification
+        if (!user.emailVerified) {
+            window.location.href = '/verify-email.html';
+            return false;
+        }
+
+        RouteGuard._hideLoading();
         return true;
     },
 
@@ -73,6 +125,7 @@ const RouteGuard = {
     requireAdmin: async (redirectTo = '/member/index.html') => {
         const isAdmin = await Auth.isAdmin();
         if (!isAdmin) {
+            alert('Akses ditolak. Anda bukan admin.');
             window.location.href = redirectTo;
             return false;
         }
@@ -82,7 +135,7 @@ const RouteGuard = {
     // Redirect if already logged in
     redirectIfLoggedIn: async (redirectTo = '/member/index.html') => {
         const user = await Auth.getCurrentUser();
-        if (user) {
+        if (user && user.emailVerified) {
             const isAdmin = await Auth.isAdmin();
             window.location.href = isAdmin ? '/admin/index.html' : redirectTo;
             return true;
@@ -178,12 +231,17 @@ const Products = {
 const SiteConfig = {
     // Get site config
     get: async () => {
-        const doc = await db.collection('config').doc('site').get();
-        return doc.exists ? doc.data() : {
-            hero_title: 'Platform Tools Digital',
-            hero_desc: 'Akses berbagai tools dan software premium untuk bisnis Anda.',
-            footer_text: '© 2026 Sebagian. All rights reserved.'
-        };
+        try {
+            const doc = await db.collection('config').doc('site').get();
+            return doc.exists ? doc.data() : {
+                hero_title: 'Platform Tools Digital',
+                hero_desc: 'Akses berbagai tools dan software premium untuk bisnis Anda.',
+                footer_text: '© 2026 Sebagian. All rights reserved.'
+            };
+        } catch (error) {
+            console.error('Error getting site config:', error);
+            return {};
+        }
     },
 
     // Update site config (Admin only)
