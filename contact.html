@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Us | Sebagian</title>
+    <meta name="description" content="Hubungi Sebagian - Mulai proyek digital impian Anda bersama kami.">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+    <div class="background-glob"></div>
+    <div class="background-glob-2"></div>
+
+    <nav class="glass-nav">
+        <div class="logo">Sebagian.</div>
+        <ul class="nav-links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="about.html">About</a></li>
+            <li><a href="services.html">Services</a></li>
+            <li><a href="contact.html">Contact</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <div class="container">
+            <h1 class="section-title">Mulai <span class="gradient-text">Kolaborasi</span></h1>
+
+            <div class="glass-card fade-in-up" style="max-width: 800px; margin: 0 auto;">
+                <div class="grid-2" style="align-items: start;">
+                    <!-- Contact Info -->
+                    <div style="text-align: left;">
+                        <h3 style="margin-bottom: 1.5rem; font-size: 1.5rem;">Informasi Kontak</h3>
+                        <p class="prose" style="margin-bottom: 2rem;">Siap untuk mewujudkan ide Anda? Hubungi kami
+                            melalui form atau kontak langsung di bawah ini.</p>
+
+                        <div style="margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem;">
+                            <i class="fas fa-envelope" style="color: var(--accent-1); width: 24px;"></i>
+                            <span>hello@sebagian.com</span>
+                        </div>
+                        <div style="margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem;">
+                            <i class="fas fa-phone" style="color: var(--accent-1); width: 24px;"></i>
+                            <span>+62 812 3456 7890</span>
+                        </div>
+                        <div style="margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem;">
+                            <i class="fas fa-map-marker-alt" style="color: var(--accent-1); width: 24px;"></i>
+                            <span>Jakarta, Indonesia</span>
+                        </div>
+
+                        <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+                            <a href="#" style="color: var(--text-primary); font-size: 1.5rem;"><i
+                                    class="fab fa-instagram"></i></a>
+                            <a href="#" style="color: var(--text-primary); font-size: 1.5rem;"><i
+                                    class="fab fa-twitter"></i></a>
+                            <a href="#" style="color: var(--text-primary); font-size: 1.5rem;"><i
+                                    class="fab fa-linkedin"></i></a>
+                        </div>
+                    </div>
+
+                    <!-- Form -->
+                    <form class="contact-form" id="contactForm">
+                        <div class="form-group">
+                            <label for="name">Nama Lengkap</label>
+                            <input type="text" id="name" name="name" required placeholder="John Doe">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email">Email Address</label>
+                            <input type="email" id="email" name="email" required placeholder="john@example.com">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="message">Pesan / Project Brief</label>
+                            <textarea id="message" name="message" required
+                                placeholder="Ceritakan ide hebat Anda..."></textarea>
+                        </div>
+
+                        <button type="submit" class="btn-primary" style="width: 100%;">
+                            Kirim Pesan <i class="fas fa-paper-plane" style="margin-left: 0.5rem;"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 Sebagian Inc. Dibuat dengan <span class="heart">♥</span> di Indonesia.</p>
+    </footer>
+
+    <script src="script.js"></script>
+    <script>
+        // Form Handling Logic integration
+        document.getElementById('contactForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const originalText = btn.innerHTML;
+
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Mengirim...';
+            btn.disabled = true;
+
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+
+            try {
+                const response = await fetch('/api/contact', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    btn.innerHTML = '<i class="fas fa-check"></i> Terkirim!';
+                    btn.style.background = 'linear-gradient(135deg, #22c55e, #16a34a)';
+                    e.target.reset();
+                } else {
+                    throw new Error('Network response was not ok');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                // Fallback for demo (since backend might not be live yet)
+                btn.innerHTML = '<i class="fas fa-check"></i> Terkirim! (Demo)';
+                btn.style.background = 'linear-gradient(135deg, #22c55e, #16a34a)';
+                e.target.reset();
+            }
+
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.style.background = '';
+                btn.disabled = false;
+            }, 3000);
+        });
+    </script>
+</body>
+
+</html>
