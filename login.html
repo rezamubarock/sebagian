@@ -5,11 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login | Sebagian</title>
-    <meta name="description" content="Login ke akun Sebagian Anda untuk mengakses tools premium.">
+    <meta name="description" content="Login ke akun Sebagian Anda.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=2">
 </head>
 
 <body>
@@ -22,7 +22,7 @@
             </div>
 
             <h1 class="text-center">Selamat Datang</h1>
-            <p class="subtitle text-center">Masuk ke akun Anda untuk melanjutkan</p>
+            <p class="subtitle text-center">Masuk ke akun Anda</p>
 
             <form id="loginForm">
                 <div class="form-group">
@@ -40,12 +40,15 @@
                 </button>
             </form>
 
-            <div id="errorMessage" class="text-center mb-2 hidden"
-                style="color: var(--accent-danger); margin-top: 1rem;"></div>
+            <div id="errorMessage" class="text-center hidden"
+                style="color: #ef4444; margin-top: 1rem; padding: 1rem; background: rgba(239,68,68,0.1); border-radius: 8px;">
+            </div>
 
             <p class="auth-footer">
                 Belum punya akun? <a href="register.html">Daftar Sekarang</a>
             </p>
+
+            <p style="text-align: center; margin-top: 1rem; font-size: 0.75rem; color: #666;">v2.0</p>
         </div>
     </div>
 
@@ -53,12 +56,46 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script src="app.js"></script>
 
     <script>
-        // Redirect if already logged in
-        RouteGuard.redirectIfLoggedIn();
+        // ============ FIREBASE CONFIG ============
+        const firebaseConfig = {
+            apiKey: "AIzaSyDnehs_q4onSxnzfqRrK-yS8IaK48ep2dk",
+            authDomain: "sebagian-platform.firebaseapp.com",
+            projectId: "sebagian-platform",
+            storageBucket: "sebagian-platform.firebasestorage.app",
+            messagingSenderId: "40404300194",
+            appId: "1:40404300194:web:6fbfb34d3d3daad966c2fb"
+        };
 
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        console.log('✅ Firebase initialized');
+
+        // Check if already logged in
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                console.log('Already logged in, redirecting...');
+                redirectUser(user);
+            }
+        });
+
+        async function redirectUser(user) {
+            try {
+                const doc = await db.collection('users').doc(user.uid).get();
+                if (doc.exists && doc.data().role === 'admin') {
+                    window.location.href = '/admin/index.html';
+                } else {
+                    window.location.href = '/member/index.html';
+                }
+            } catch (e) {
+                window.location.href = '/member/index.html';
+            }
+        }
+
+        // ============ FORM HANDLER ============
         const form = document.getElementById('loginForm');
         const submitBtn = document.getElementById('submitBtn');
         const errorMessage = document.getElementById('errorMessage');
@@ -66,45 +103,37 @@
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const email = document.getElementById('email').value;
+            const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
 
-            UI.setButtonLoading(submitBtn, true);
             errorMessage.classList.add('hidden');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Masuk...';
 
             try {
+                console.log('📝 Logging in...');
                 const userCredential = await auth.signInWithEmailAndPassword(email, password);
-                const user = userCredential.user;
+                console.log('✅ Login successful');
 
-                // Check if email is verified
-                if (!user.emailVerified) {
-                    window.location.href = '/verify-email.html';
-                    return;
-                }
+                await redirectUser(userCredential.user);
 
-                // Check role and redirect
-                const userData = await Auth.getUserData(user.uid);
-
-                if (userData?.role === 'admin') {
-                    window.location.href = '/admin/index.html';
-                } else {
-                    window.location.href = '/member/index.html';
-                }
             } catch (error) {
-                console.error('Login error:', error);
+                console.error('❌ Error:', error);
 
-                let message = 'Terjadi kesalahan. Silakan coba lagi.';
+                let message = '❌ ' + error.message;
                 if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-                    message = 'Email atau password salah.';
+                    message = '❌ Email atau password salah.';
                 } else if (error.code === 'auth/invalid-email') {
-                    message = 'Format email tidak valid.';
+                    message = '❌ Format email tidak valid.';
                 } else if (error.code === 'auth/too-many-requests') {
-                    message = 'Terlalu banyak percobaan. Coba lagi nanti.';
+                    message = '❌ Terlalu banyak percobaan. Coba lagi nanti.';
                 }
 
-                errorMessage.textContent = message;
+                errorMessage.innerHTML = message;
                 errorMessage.classList.remove('hidden');
-                UI.setButtonLoading(submitBtn, false);
+
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Masuk';
             }
         });
     </script>
