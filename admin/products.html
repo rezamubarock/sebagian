@@ -4,12 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kelola Produk | Admin Sebagian</title>
+    <title>Kelola Produk | Admin</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../style.css?v=3">
     <style>
         .dashboard {
             display: none;
@@ -27,7 +27,8 @@
             justify-content: center;
             z-index: 9999;
             color: white;
-            font-family: Inter, sans-serif;
+            flex-direction: column;
+            gap: 1rem;
         }
 
         .auth-loading.hidden {
@@ -58,37 +59,20 @@
         .modal-content {
             background: var(--bg-card);
             border: 1px solid var(--border-color);
-            border-radius: var(--radius-lg);
+            border-radius: 16px;
             padding: 2rem;
             width: 100%;
             max-width: 600px;
             max-height: 90vh;
             overflow-y: auto;
         }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-        }
-
-        .modal-close {
-            background: none;
-            border: none;
-            color: var(--text-secondary);
-            font-size: 1.5rem;
-            cursor: pointer;
-        }
     </style>
 </head>
 
 <body>
     <div class="auth-loading" id="authLoading">
-        <div style="text-align: center;">
-            <div style="font-size: 2rem; margin-bottom: 1rem;">⏳</div>
-            <div>Memverifikasi akses admin...</div>
-        </div>
+        <div style="font-size: 2rem;">⏳</div>
+        <div>Memuat...</div>
     </div>
 
     <div class="dashboard" id="dashboardContent">
@@ -97,7 +81,6 @@
                 <a href="/" class="logo">Sebagian.</a>
                 <span class="badge badge-warning" style="margin-left: 0.5rem;">Admin</span>
             </div>
-
             <nav class="sidebar-nav">
                 <ul>
                     <li><a href="/admin/index.html"><i class="fas fa-chart-line"></i> Dashboard</a></li>
@@ -107,11 +90,9 @@
                     <li><a href="/admin/settings.html"><i class="fas fa-cog"></i> Pengaturan</a></li>
                 </ul>
             </nav>
-
             <div class="sidebar-footer">
-                <button class="btn btn-danger btn-block btn-sm" onclick="Auth.logout()">
-                    <i class="fas fa-sign-out-alt"></i> Logout
-                </button>
+                <button class="btn btn-danger btn-block btn-sm" onclick="logout()"><i class="fas fa-sign-out-alt"></i>
+                    Logout</button>
             </div>
         </aside>
 
@@ -121,9 +102,7 @@
                     <h1>Kelola Produk</h1>
                     <p class="text-muted">Tambah, edit, atau hapus produk</p>
                 </div>
-                <button class="btn btn-primary" onclick="openModal()">
-                    <i class="fas fa-plus"></i> Tambah Produk
-                </button>
+                <button class="btn btn-primary" onclick="openModal()"><i class="fas fa-plus"></i> Tambah Produk</button>
             </div>
 
             <div class="card">
@@ -149,62 +128,48 @@
         </main>
     </div>
 
-    <!-- Modal -->
     <div class="modal" id="productModal">
         <div class="modal-content">
-            <div class="modal-header">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
                 <h3 id="modalTitle">Tambah Produk</h3>
-                <button class="modal-close" onclick="closeModal()">&times;</button>
+                <button onclick="closeModal()"
+                    style="background: none; border: none; color: #888; font-size: 1.5rem; cursor: pointer;">&times;</button>
             </div>
-
             <form id="productForm">
                 <input type="hidden" id="productId">
-
                 <div class="form-group">
                     <label class="form-label">Nama Produk *</label>
-                    <input type="text" class="form-input" id="name" required placeholder="Contoh: AI Image Generator">
+                    <input type="text" class="form-input" id="name" required>
                 </div>
-
                 <div class="form-group">
                     <label class="form-label">Deskripsi</label>
-                    <textarea class="form-input" id="description" rows="3"
-                        placeholder="Deskripsi singkat..."></textarea>
+                    <textarea class="form-input" id="description" rows="3"></textarea>
                 </div>
-
-                <div class="grid-2" style="gap: 1rem;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                     <div class="form-group">
                         <label class="form-label">Tipe *</label>
-                        <select class="form-input" id="type" required>
+                        <select class="form-input" id="type">
                             <option value="web_tool">Web Tool</option>
                             <option value="software_download">Software Download</option>
                         </select>
                     </div>
-
                     <div class="form-group">
                         <label class="form-label">Harga (Rp) *</label>
-                        <input type="number" class="form-input" id="price" required placeholder="179000">
+                        <input type="number" class="form-input" id="price" required>
                     </div>
                 </div>
-
-                <div class="form-group" id="accessUrlGroup">
-                    <label class="form-label">URL Akses Tool</label>
-                    <input type="url" class="form-input" id="accessUrl" placeholder="https://...">
+                <div class="form-group">
+                    <label class="form-label">URL Akses / Download</label>
+                    <input type="url" class="form-input" id="accessUrl">
                 </div>
-
-                <div class="form-group hidden" id="downloadUrlGroup">
-                    <label class="form-label">URL Download</label>
-                    <input type="url" class="form-input" id="downloadUrl" placeholder="https://...">
-                </div>
-
                 <div class="form-group">
                     <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
                         <input type="checkbox" id="isActive" checked>
                         <span>Produk Aktif</span>
                     </label>
                 </div>
-
-                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
-                    <button type="submit" class="btn btn-primary" id="submitBtn">Simpan</button>
+                <div style="display: flex; gap: 1rem;">
+                    <button type="submit" class="btn btn-primary">Simpan</button>
                     <button type="button" class="btn btn-secondary" onclick="closeModal()">Batal</button>
                 </div>
             </form>
@@ -214,18 +179,30 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script src="../app.js"></script>
 
     <script>
-        let products = [];
+        const firebaseConfig = {
+            apiKey: "AIzaSyDnehs_q4onSxnzfqRrK-yS8IaK48ep2dk",
+            authDomain: "sebagian-platform.firebaseapp.com",
+            projectId: "sebagian-platform",
+            storageBucket: "sebagian-platform.firebasestorage.app",
+            messagingSenderId: "40404300194",
+            appId: "1:40404300194:web:6fbfb34d3d3daad966c2fb"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
 
-        async function init() {
-            const user = await Auth.getCurrentUser();
+        let products = [];
+        function logout() { auth.signOut().then(() => window.location.href = '/login.html'); }
+        function formatCurrency(n) { return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n); }
+
+        auth.onAuthStateChanged(async (user) => {
             if (!user) { window.location.replace('/login.html'); return; }
             if (!user.emailVerified) { window.location.replace('/verify-email.html'); return; }
 
-            const userData = await Auth.getUserData(user.uid);
-            if (!userData || userData.role !== 'admin') {
+            const doc = await db.collection('users').doc(user.uid).get();
+            if (!doc.exists || doc.data().role !== 'admin') {
                 alert('Akses ditolak.');
                 window.location.replace('/member/index.html');
                 return;
@@ -233,57 +210,41 @@
 
             document.getElementById('authLoading').classList.add('hidden');
             document.getElementById('dashboardContent').classList.add('visible');
-
-            document.getElementById('type').addEventListener('change', (e) => {
-                const isWeb = e.target.value === 'web_tool';
-                document.getElementById('accessUrlGroup').classList.toggle('hidden', !isWeb);
-                document.getElementById('downloadUrlGroup').classList.toggle('hidden', isWeb);
-            });
-
             await loadProducts();
-        }
+        });
 
         async function loadProducts() {
-            try {
-                const snapshot = await db.collection('products').orderBy('createdAt', 'desc').get();
-                products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-                const tbody = document.getElementById('productsTable');
-
-                if (products.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted" style="padding: 2rem;">Belum ada produk</td></tr>`;
-                    return;
-                }
-
-                tbody.innerHTML = products.map(p => `
-                    <tr>
-                        <td><strong>${p.name}</strong></td>
-                        <td><span class="badge ${p.type === 'web_tool' ? 'badge-info' : 'badge-success'}">${p.type === 'web_tool' ? 'Web' : 'Software'}</span></td>
-                        <td>${UI.formatCurrency(p.price)}</td>
-                        <td><span class="badge ${p.isActive ? 'badge-success' : 'badge-danger'}">${p.isActive ? 'Aktif' : 'Nonaktif'}</span></td>
-                        <td>
-                            <button class="btn btn-secondary btn-sm" onclick="editProduct('${p.id}')"><i class="fas fa-edit"></i></button>
-                            <button class="btn btn-danger btn-sm" onclick="deleteProduct('${p.id}')"><i class="fas fa-trash"></i></button>
-                        </td>
-                    </tr>
-                `).join('');
-            } catch (error) {
-                console.error('Error:', error);
+            const snap = await db.collection('products').orderBy('createdAt', 'desc').get();
+            products = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            const tbody = document.getElementById('productsTable');
+            if (products.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted" style="padding: 2rem;">Belum ada produk</td></tr>`;
+                return;
             }
+            tbody.innerHTML = products.map(p => `
+                <tr>
+                    <td><strong>${p.name}</strong></td>
+                    <td><span class="badge ${p.type === 'web_tool' ? 'badge-info' : 'badge-success'}">${p.type === 'web_tool' ? 'Web' : 'Software'}</span></td>
+                    <td>${formatCurrency(p.price || 0)}</td>
+                    <td><span class="badge ${p.isActive ? 'badge-success' : 'badge-danger'}">${p.isActive ? 'Aktif' : 'Nonaktif'}</span></td>
+                    <td>
+                        <button class="btn btn-secondary btn-sm" onclick="editProduct('${p.id}')"><i class="fas fa-edit"></i></button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteProduct('${p.id}')"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>
+            `).join('');
         }
 
         function openModal(product = null) {
             document.getElementById('productModal').classList.add('open');
             document.getElementById('modalTitle').textContent = product ? 'Edit Produk' : 'Tambah Produk';
-
             if (product) {
                 document.getElementById('productId').value = product.id;
                 document.getElementById('name').value = product.name;
                 document.getElementById('description').value = product.description || '';
                 document.getElementById('type').value = product.type;
                 document.getElementById('price').value = product.price;
-                document.getElementById('accessUrl').value = product.accessUrl || '';
-                document.getElementById('downloadUrl').value = product.downloadUrl || '';
+                document.getElementById('accessUrl').value = product.accessUrl || product.downloadUrl || '';
                 document.getElementById('isActive').checked = product.isActive !== false;
             } else {
                 document.getElementById('productForm').reset();
@@ -291,55 +252,38 @@
                 document.getElementById('isActive').checked = true;
             }
         }
-
-        function closeModal() {
-            document.getElementById('productModal').classList.remove('open');
-        }
-
-        function editProduct(id) {
-            const product = products.find(p => p.id === id);
-            if (product) openModal(product);
-        }
-
+        function closeModal() { document.getElementById('productModal').classList.remove('open'); }
+        function editProduct(id) { const p = products.find(x => x.id === id); if (p) openModal(p); }
         async function deleteProduct(id) {
-            if (!confirm('Yakin ingin menghapus?')) return;
+            if (!confirm('Yakin hapus?')) return;
             await db.collection('products').doc(id).delete();
             await loadProducts();
         }
 
         document.getElementById('productForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const btn = document.getElementById('submitBtn');
-            UI.setButtonLoading(btn, true);
-
-            const productId = document.getElementById('productId').value;
+            const id = document.getElementById('productId').value;
+            const type = document.getElementById('type').value;
+            const url = document.getElementById('accessUrl').value;
             const data = {
                 name: document.getElementById('name').value,
                 description: document.getElementById('description').value,
-                type: document.getElementById('type').value,
-                price: parseInt(document.getElementById('price').value),
-                accessUrl: document.getElementById('accessUrl').value,
-                downloadUrl: document.getElementById('downloadUrl').value,
+                type: type,
+                price: parseInt(document.getElementById('price').value) || 0,
+                accessUrl: type === 'web_tool' ? url : '',
+                downloadUrl: type === 'software_download' ? url : '',
                 isActive: document.getElementById('isActive').checked,
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             };
-
-            try {
-                if (productId) {
-                    await db.collection('products').doc(productId).update(data);
-                } else {
-                    data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-                    await db.collection('products').add(data);
-                }
-                closeModal();
-                await loadProducts();
-            } catch (error) {
-                alert('Error: ' + error.message);
+            if (id) {
+                await db.collection('products').doc(id).update(data);
+            } else {
+                data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                await db.collection('products').add(data);
             }
-            UI.setButtonLoading(btn, false);
+            closeModal();
+            await loadProducts();
         });
-
-        init();
     </script>
 </body>
 

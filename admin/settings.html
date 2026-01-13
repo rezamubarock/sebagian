@@ -4,12 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pengaturan | Admin Sebagian</title>
+    <title>Pengaturan | Admin</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../style.css?v=3">
     <style>
         .dashboard {
             display: none;
@@ -27,6 +27,8 @@
             justify-content: center;
             z-index: 9999;
             color: white;
+            flex-direction: column;
+            gap: 1rem;
         }
 
         .auth-loading.hidden {
@@ -41,18 +43,14 @@
 
 <body>
     <div class="auth-loading" id="authLoading">
-        <div style="text-align: center;">
-            <div style="font-size: 2rem; margin-bottom: 1rem;">⏳</div>
-            <div>Memverifikasi akses admin...</div>
-        </div>
+        <div style="font-size: 2rem;">⏳</div>
+        <div>Memuat...</div>
     </div>
 
     <div class="dashboard" id="dashboardContent">
         <aside class="sidebar">
-            <div class="sidebar-logo">
-                <a href="/" class="logo">Sebagian.</a>
-                <span class="badge badge-warning" style="margin-left: 0.5rem;">Admin</span>
-            </div>
+            <div class="sidebar-logo"><a href="/" class="logo">Sebagian.</a><span class="badge badge-warning"
+                    style="margin-left: 0.5rem;">Admin</span></div>
             <nav class="sidebar-nav">
                 <ul>
                     <li><a href="/admin/index.html"><i class="fas fa-chart-line"></i> Dashboard</a></li>
@@ -62,11 +60,8 @@
                     <li><a href="/admin/settings.html" class="active"><i class="fas fa-cog"></i> Pengaturan</a></li>
                 </ul>
             </nav>
-            <div class="sidebar-footer">
-                <button class="btn btn-danger btn-block btn-sm" onclick="Auth.logout()">
-                    <i class="fas fa-sign-out-alt"></i> Logout
-                </button>
-            </div>
+            <div class="sidebar-footer"><button class="btn btn-danger btn-block btn-sm" onclick="logout()"><i
+                        class="fas fa-sign-out-alt"></i> Logout</button></div>
         </aside>
 
         <main class="dashboard-main">
@@ -74,40 +69,35 @@
                 <h1>Pengaturan Website</h1>
                 <p class="text-muted">Edit konten landing page</p>
             </div>
-
             <div class="card" style="max-width: 700px;">
                 <h3 class="mb-3"><i class="fas fa-edit"></i> Konten Landing Page</h3>
-
-                <form id="siteConfigForm">
+                <form id="configForm">
                     <div class="form-group">
                         <label class="form-label">Hero Badge</label>
                         <input type="text" class="form-input" id="hero_badge" placeholder="🚀 Platform #1...">
                     </div>
-
                     <div class="form-group">
                         <label class="form-label">Hero Title (HTML diizinkan)</label>
                         <input type="text" class="form-input" id="hero_title">
                     </div>
-
                     <div class="form-group">
                         <label class="form-label">Hero Description</label>
                         <textarea class="form-input" id="hero_desc" rows="3"></textarea>
                     </div>
-
                     <div class="form-group">
                         <label class="form-label">Footer Text</label>
                         <input type="text" class="form-input" id="footer_text">
                     </div>
-
                     <div class="form-group">
                         <label class="form-label">WhatsApp Admin</label>
                         <input type="text" class="form-input" id="whatsapp" placeholder="6281234567890">
                     </div>
-
-                    <button type="submit" class="btn btn-primary" id="saveBtn">
-                        <i class="fas fa-save"></i> Simpan
-                    </button>
+                    <button type="submit" class="btn btn-primary" id="saveBtn"><i class="fas fa-save"></i>
+                        Simpan</button>
                 </form>
+                <div id="successMsg" class="hidden"
+                    style="margin-top: 1rem; padding: 1rem; background: rgba(34,197,94,0.1); color: #22c55e; border-radius: 8px;">
+                    ✅ Berhasil disimpan!</div>
             </div>
         </main>
     </div>
@@ -115,63 +105,56 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script src="../app.js"></script>
 
     <script>
-        async function init() {
-            const user = await Auth.getCurrentUser();
+        const firebaseConfig = { apiKey: "AIzaSyDnehs_q4onSxnzfqRrK-yS8IaK48ep2dk", authDomain: "sebagian-platform.firebaseapp.com", projectId: "sebagian-platform", storageBucket: "sebagian-platform.firebasestorage.app", messagingSenderId: "40404300194", appId: "1:40404300194:web:6fbfb34d3d3daad966c2fb" };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        function logout() { auth.signOut().then(() => window.location.href = '/login.html'); }
+
+        auth.onAuthStateChanged(async (user) => {
             if (!user) { window.location.replace('/login.html'); return; }
             if (!user.emailVerified) { window.location.replace('/verify-email.html'); return; }
-
-            const userData = await Auth.getUserData(user.uid);
-            if (!userData || userData.role !== 'admin') {
-                alert('Akses ditolak.');
-                window.location.replace('/member/index.html');
-                return;
-            }
-
+            const doc = await db.collection('users').doc(user.uid).get();
+            if (!doc.exists || doc.data().role !== 'admin') { alert('Akses ditolak.'); window.location.replace('/member/index.html'); return; }
             document.getElementById('authLoading').classList.add('hidden');
             document.getElementById('dashboardContent').classList.add('visible');
-
             await loadConfig();
-        }
-
-        async function loadConfig() {
-            const config = await SiteConfig.get();
-
-            document.getElementById('hero_badge').value = config.hero_badge || '';
-            document.getElementById('hero_title').value = config.hero_title || '';
-            document.getElementById('hero_desc').value = config.hero_desc || '';
-            document.getElementById('footer_text').value = config.footer_text || '';
-            document.getElementById('whatsapp').value = config.whatsapp || '';
-        }
-
-        document.getElementById('siteConfigForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const btn = document.getElementById('saveBtn');
-            UI.setButtonLoading(btn, true);
-
-            const data = {
-                hero_badge: document.getElementById('hero_badge').value,
-                hero_title: document.getElementById('hero_title').value,
-                hero_desc: document.getElementById('hero_desc').value,
-                footer_text: document.getElementById('footer_text').value,
-                whatsapp: document.getElementById('whatsapp').value,
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            };
-
-            try {
-                await SiteConfig.update(data);
-                alert('Berhasil disimpan!');
-            } catch (error) {
-                alert('Gagal: ' + error.message);
-            }
-
-            UI.setButtonLoading(btn, false);
         });
 
-        init();
+        async function loadConfig() {
+            try {
+                const doc = await db.collection('config').doc('site').get();
+                const c = doc.exists ? doc.data() : {};
+                document.getElementById('hero_badge').value = c.hero_badge || '';
+                document.getElementById('hero_title').value = c.hero_title || '';
+                document.getElementById('hero_desc').value = c.hero_desc || '';
+                document.getElementById('footer_text').value = c.footer_text || '';
+                document.getElementById('whatsapp').value = c.whatsapp || '';
+            } catch (e) { console.error(e); }
+        }
+
+        document.getElementById('configForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('saveBtn');
+            btn.disabled = true;
+            btn.textContent = 'Menyimpan...';
+            try {
+                await db.collection('config').doc('site').set({
+                    hero_badge: document.getElementById('hero_badge').value,
+                    hero_title: document.getElementById('hero_title').value,
+                    hero_desc: document.getElementById('hero_desc').value,
+                    footer_text: document.getElementById('footer_text').value,
+                    whatsapp: document.getElementById('whatsapp').value,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
+                document.getElementById('successMsg').classList.remove('hidden');
+                setTimeout(() => document.getElementById('successMsg').classList.add('hidden'), 3000);
+            } catch (err) { alert('Error: ' + err.message); }
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-save"></i> Simpan';
+        });
     </script>
 </body>
 

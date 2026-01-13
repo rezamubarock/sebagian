@@ -4,12 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Members | Admin Sebagian</title>
+    <title>Members | Admin</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../style.css?v=3">
     <style>
         .dashboard {
             display: none;
@@ -27,6 +27,8 @@
             justify-content: center;
             z-index: 9999;
             color: white;
+            flex-direction: column;
+            gap: 1rem;
         }
 
         .auth-loading.hidden {
@@ -41,18 +43,14 @@
 
 <body>
     <div class="auth-loading" id="authLoading">
-        <div style="text-align: center;">
-            <div style="font-size: 2rem; margin-bottom: 1rem;">⏳</div>
-            <div>Memverifikasi akses admin...</div>
-        </div>
+        <div style="font-size: 2rem;">⏳</div>
+        <div>Memuat...</div>
     </div>
 
     <div class="dashboard" id="dashboardContent">
         <aside class="sidebar">
-            <div class="sidebar-logo">
-                <a href="/" class="logo">Sebagian.</a>
-                <span class="badge badge-warning" style="margin-left: 0.5rem;">Admin</span>
-            </div>
+            <div class="sidebar-logo"><a href="/" class="logo">Sebagian.</a><span class="badge badge-warning"
+                    style="margin-left: 0.5rem;">Admin</span></div>
             <nav class="sidebar-nav">
                 <ul>
                     <li><a href="/admin/index.html"><i class="fas fa-chart-line"></i> Dashboard</a></li>
@@ -62,11 +60,8 @@
                     <li><a href="/admin/settings.html"><i class="fas fa-cog"></i> Pengaturan</a></li>
                 </ul>
             </nav>
-            <div class="sidebar-footer">
-                <button class="btn btn-danger btn-block btn-sm" onclick="Auth.logout()">
-                    <i class="fas fa-sign-out-alt"></i> Logout
-                </button>
-            </div>
+            <div class="sidebar-footer"><button class="btn btn-danger btn-block btn-sm" onclick="logout()"><i
+                        class="fas fa-sign-out-alt"></i> Logout</button></div>
         </aside>
 
         <main class="dashboard-main">
@@ -74,26 +69,25 @@
                 <h1>Kelola Members</h1>
                 <p class="text-muted">Lihat dan kelola semua member</p>
             </div>
-
             <div class="card">
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Member</th>
-                                <th>Role</th>
-                                <th>Produk</th>
-                                <th>Terdaftar</th>
-                                <th>Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="membersTable">
-                            <tr>
-                                <td colspan="5" class="text-center text-muted" style="padding: 2rem;">Memuat...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr>
+                            <th
+                                style="text-align: left; padding: 1rem; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                Member</th>
+                            <th>Role</th>
+                            <th>Produk</th>
+                            <th>Terdaftar</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="membersTable">
+                        <tr>
+                            <td colspan="5" class="text-center text-muted" style="padding: 2rem;">Memuat...</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </main>
     </div>
@@ -101,93 +95,57 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script src="../app.js"></script>
 
     <script>
-        let members = [];
-        let products = [];
+        const firebaseConfig = { apiKey: "AIzaSyDnehs_q4onSxnzfqRrK-yS8IaK48ep2dk", authDomain: "sebagian-platform.firebaseapp.com", projectId: "sebagian-platform", storageBucket: "sebagian-platform.firebasestorage.app", messagingSenderId: "40404300194", appId: "1:40404300194:web:6fbfb34d3d3daad966c2fb" };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        let members = [], products = [];
+        function logout() { auth.signOut().then(() => window.location.href = '/login.html'); }
+        function formatDate(ts) { if (!ts) return '-'; const d = ts.toDate ? ts.toDate() : new Date(ts); return d.toLocaleDateString('id-ID'); }
 
-        async function init() {
-            const user = await Auth.getCurrentUser();
+        auth.onAuthStateChanged(async (user) => {
             if (!user) { window.location.replace('/login.html'); return; }
             if (!user.emailVerified) { window.location.replace('/verify-email.html'); return; }
-
-            const userData = await Auth.getUserData(user.uid);
-            if (!userData || userData.role !== 'admin') {
-                alert('Akses ditolak.');
-                window.location.replace('/member/index.html');
-                return;
-            }
-
+            const doc = await db.collection('users').doc(user.uid).get();
+            if (!doc.exists || doc.data().role !== 'admin') { alert('Akses ditolak.'); window.location.replace('/member/index.html'); return; }
             document.getElementById('authLoading').classList.add('hidden');
             document.getElementById('dashboardContent').classList.add('visible');
-
-            const productsSnap = await db.collection('products').get();
-            products = productsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
+            const psnap = await db.collection('products').get();
+            products = psnap.docs.map(d => ({ id: d.id, ...d.data() }));
             await loadMembers();
-        }
+        });
 
         async function loadMembers() {
-            const snapshot = await db.collection('users').orderBy('createdAt', 'desc').get();
-            members = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
+            const snap = await db.collection('users').orderBy('createdAt', 'desc').get();
+            members = snap.docs.map(d => ({ id: d.id, ...d.data() }));
             const tbody = document.getElementById('membersTable');
-
-            if (members.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Belum ada member</td></tr>`;
-                return;
-            }
-
+            if (members.length === 0) { tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Belum ada member</td></tr>`; return; }
             tbody.innerHTML = members.map(m => `
                 <tr>
-                    <td>
-                        <strong>${m.displayName || 'No Name'}</strong><br>
-                        <small class="text-muted">${m.email}</small>
-                    </td>
+                    <td style="padding: 1rem;"><strong>${m.displayName || 'No Name'}</strong><br><small class="text-muted">${m.email}</small></td>
                     <td><span class="badge ${m.role === 'admin' ? 'badge-warning' : 'badge-info'}">${m.role || 'member'}</span></td>
                     <td>${m.purchasedProducts?.length || 0} produk</td>
-                    <td>${m.createdAt ? UI.formatDate(m.createdAt) : '-'}</td>
-                    <td>
-                        <button class="btn btn-primary btn-sm" onclick="grantProduct('${m.id}')" title="Berikan Produk">
-                            <i class="fas fa-gift"></i>
-                        </button>
-                    </td>
+                    <td>${formatDate(m.createdAt)}</td>
+                    <td><button class="btn btn-primary btn-sm" onclick="grantProduct('${m.id}')" title="Berikan Produk"><i class="fas fa-gift"></i></button></td>
                 </tr>
             `).join('');
         }
 
-        async function grantProduct(memberId) {
-            const member = members.find(m => m.id === memberId);
-            if (!member) return;
-
-            const available = products.filter(p => !member.purchasedProducts?.includes(p.id));
-
-            if (available.length === 0) {
-                alert('Member sudah punya semua produk!');
-                return;
-            }
-
-            const list = available.map((p, i) => `${i + 1}. ${p.name}`).join('\n');
-            const choice = prompt(`Pilih produk untuk ${member.displayName || member.email}:\n\n${list}\n\nMasukkan nomor:`);
-
-            if (!choice) return;
-            const idx = parseInt(choice) - 1;
-            if (isNaN(idx) || idx < 0 || idx >= available.length) {
-                alert('Pilihan tidak valid');
-                return;
-            }
-
-            const selected = available[idx];
-            await db.collection('users').doc(memberId).update({
-                purchasedProducts: firebase.firestore.FieldValue.arrayUnion(selected.id)
-            });
-
-            alert(`Berhasil! ${selected.name} diberikan ke ${member.displayName || member.email}`);
+        async function grantProduct(mid) {
+            const m = members.find(x => x.id === mid);
+            const avail = products.filter(p => !m.purchasedProducts?.includes(p.id));
+            if (avail.length === 0) { alert('Member sudah punya semua produk!'); return; }
+            const list = avail.map((p, i) => `${i + 1}. ${p.name}`).join('\n');
+            const c = prompt(`Pilih produk untuk ${m.displayName || m.email}:\n\n${list}\n\nMasukkan nomor:`);
+            if (!c) return;
+            const idx = parseInt(c) - 1;
+            if (isNaN(idx) || idx < 0 || idx >= avail.length) { alert('Pilihan tidak valid'); return; }
+            await db.collection('users').doc(mid).update({ purchasedProducts: firebase.firestore.FieldValue.arrayUnion(avail[idx].id) });
+            alert(`Berhasil! ${avail[idx].name} diberikan.`);
             await loadMembers();
         }
-
-        init();
     </script>
 </body>
 

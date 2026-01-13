@@ -4,12 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Transaksi | Admin Sebagian</title>
+    <title>Transaksi | Admin</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../style.css?v=3">
     <style>
         .dashboard {
             display: none;
@@ -27,6 +27,8 @@
             justify-content: center;
             z-index: 9999;
             color: white;
+            flex-direction: column;
+            gap: 1rem;
         }
 
         .auth-loading.hidden {
@@ -41,18 +43,14 @@
 
 <body>
     <div class="auth-loading" id="authLoading">
-        <div style="text-align: center;">
-            <div style="font-size: 2rem; margin-bottom: 1rem;">⏳</div>
-            <div>Memverifikasi akses admin...</div>
-        </div>
+        <div style="font-size: 2rem;">⏳</div>
+        <div>Memuat...</div>
     </div>
 
     <div class="dashboard" id="dashboardContent">
         <aside class="sidebar">
-            <div class="sidebar-logo">
-                <a href="/" class="logo">Sebagian.</a>
-                <span class="badge badge-warning" style="margin-left: 0.5rem;">Admin</span>
-            </div>
+            <div class="sidebar-logo"><a href="/" class="logo">Sebagian.</a><span class="badge badge-warning"
+                    style="margin-left: 0.5rem;">Admin</span></div>
             <nav class="sidebar-nav">
                 <ul>
                     <li><a href="/admin/index.html"><i class="fas fa-chart-line"></i> Dashboard</a></li>
@@ -63,11 +61,8 @@
                     <li><a href="/admin/settings.html"><i class="fas fa-cog"></i> Pengaturan</a></li>
                 </ul>
             </nav>
-            <div class="sidebar-footer">
-                <button class="btn btn-danger btn-block btn-sm" onclick="Auth.logout()">
-                    <i class="fas fa-sign-out-alt"></i> Logout
-                </button>
-            </div>
+            <div class="sidebar-footer"><button class="btn btn-danger btn-block btn-sm" onclick="logout()"><i
+                        class="fas fa-sign-out-alt"></i> Logout</button></div>
         </aside>
 
         <main class="dashboard-main">
@@ -82,28 +77,27 @@
                     <button class="btn btn-success btn-sm" onclick="filterStatus('paid')">Paid</button>
                 </div>
             </div>
-
             <div class="card">
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>User</th>
-                                <th>Produk</th>
-                                <th>Jumlah</th>
-                                <th>Status</th>
-                                <th>Tanggal</th>
-                                <th>Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="transactionsTable">
-                            <tr>
-                                <td colspan="7" class="text-center text-muted" style="padding: 2rem;">Memuat...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr>
+                            <th
+                                style="text-align: left; padding: 1rem; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                ID</th>
+                            <th>User</th>
+                            <th>Produk</th>
+                            <th>Jumlah</th>
+                            <th>Status</th>
+                            <th>Tanggal</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactionsTable">
+                        <tr>
+                            <td colspan="7" class="text-center text-muted" style="padding: 2rem;">Memuat...</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </main>
     </div>
@@ -111,99 +105,62 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script src="../app.js"></script>
 
     <script>
-        let transactions = [];
-        let currentFilter = 'all';
+        const firebaseConfig = { apiKey: "AIzaSyDnehs_q4onSxnzfqRrK-yS8IaK48ep2dk", authDomain: "sebagian-platform.firebaseapp.com", projectId: "sebagian-platform", storageBucket: "sebagian-platform.firebasestorage.app", messagingSenderId: "40404300194", appId: "1:40404300194:web:6fbfb34d3d3daad966c2fb" };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        let transactions = [], currentFilter = 'all';
+        function logout() { auth.signOut().then(() => window.location.href = '/login.html'); }
+        function formatCurrency(n) { return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n || 0); }
+        function formatDate(ts) { if (!ts) return '-'; const d = ts.toDate ? ts.toDate() : new Date(ts); return d.toLocaleDateString('id-ID'); }
 
-        async function init() {
-            const user = await Auth.getCurrentUser();
+        auth.onAuthStateChanged(async (user) => {
             if (!user) { window.location.replace('/login.html'); return; }
             if (!user.emailVerified) { window.location.replace('/verify-email.html'); return; }
-
-            const userData = await Auth.getUserData(user.uid);
-            if (!userData || userData.role !== 'admin') {
-                alert('Akses ditolak.');
-                window.location.replace('/member/index.html');
-                return;
-            }
-
+            const doc = await db.collection('users').doc(user.uid).get();
+            if (!doc.exists || doc.data().role !== 'admin') { alert('Akses ditolak.'); window.location.replace('/member/index.html'); return; }
             document.getElementById('authLoading').classList.add('hidden');
             document.getElementById('dashboardContent').classList.add('visible');
-
             await loadTransactions();
-        }
+        });
 
         async function loadTransactions() {
-            let query = db.collection('transactions').orderBy('createdAt', 'desc');
-            if (currentFilter !== 'all') {
-                query = query.where('status', '==', currentFilter);
-            }
-
-            const snapshot = await query.limit(100).get();
-            transactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
+            let q = db.collection('transactions').orderBy('createdAt', 'desc');
+            if (currentFilter !== 'all') q = q.where('status', '==', currentFilter);
+            const snap = await q.limit(100).get();
+            transactions = snap.docs.map(d => ({ id: d.id, ...d.data() }));
             const tbody = document.getElementById('transactionsTable');
-
-            if (transactions.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted">Tidak ada transaksi</td></tr>`;
-                return;
-            }
-
+            if (transactions.length === 0) { tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted" style="padding: 2rem;">Tidak ada transaksi</td></tr>`; return; }
             tbody.innerHTML = transactions.map(tx => {
-                const statusBadge = {
-                    'paid': 'badge-success',
-                    'pending': 'badge-warning',
-                    'failed': 'badge-danger'
-                }[tx.status] || 'badge-info';
-
-                return `
-                    <tr>
-                        <td><code>${tx.id.substring(0, 8)}...</code></td>
-                        <td>${tx.userEmail || '-'}</td>
-                        <td>${tx.productName || '-'}</td>
-                        <td>${UI.formatCurrency(tx.amount || 0)}</td>
-                        <td><span class="badge ${statusBadge}">${tx.status}</span></td>
-                        <td>${tx.createdAt ? UI.formatDate(tx.createdAt) : '-'}</td>
-                        <td>
-                            ${tx.status === 'pending' ? `
-                                <button class="btn btn-success btn-sm" onclick="confirmPayment('${tx.id}')"><i class="fas fa-check"></i></button>
-                                <button class="btn btn-danger btn-sm" onclick="rejectPayment('${tx.id}')"><i class="fas fa-times"></i></button>
-                            ` : '-'}
-                        </td>
-                    </tr>
-                `;
+                const sb = { 'paid': 'badge-success', 'pending': 'badge-warning', 'failed': 'badge-danger' }[tx.status] || 'badge-info';
+                return `<tr>
+                    <td style="padding: 1rem;"><code>${tx.id.substring(0, 8)}...</code></td>
+                    <td>${tx.userEmail || '-'}</td>
+                    <td>${tx.productName || '-'}</td>
+                    <td>${formatCurrency(tx.amount)}</td>
+                    <td><span class="badge ${sb}">${tx.status}</span></td>
+                    <td>${formatDate(tx.createdAt)}</td>
+                    <td>${tx.status === 'pending' ? `<button class="btn btn-success btn-sm" onclick="confirm('${tx.id}')"><i class="fas fa-check"></i></button> <button class="btn btn-danger btn-sm" onclick="reject('${tx.id}')"><i class="fas fa-times"></i></button>` : '-'}</td>
+                </tr>`;
             }).join('');
         }
 
-        function filterStatus(status) {
-            currentFilter = status;
-            loadTransactions();
-        }
-
-        async function confirmPayment(txId) {
-            if (!confirm('Konfirmasi pembayaran ini?')) return;
-
-            const txDoc = await db.collection('transactions').doc(txId).get();
-            const tx = txDoc.data();
-
-            await db.collection('transactions').doc(txId).update({ status: 'paid' });
-            await db.collection('users').doc(tx.userId).update({
-                purchasedProducts: firebase.firestore.FieldValue.arrayUnion(tx.productId)
-            });
-
-            alert('Pembayaran dikonfirmasi!');
+        function filterStatus(s) { currentFilter = s; loadTransactions(); }
+        async function confirm(id) {
+            if (!window.confirm('Konfirmasi pembayaran?')) return;
+            const tx = transactions.find(x => x.id === id);
+            await db.collection('transactions').doc(id).update({ status: 'paid' });
+            if (tx.userId && tx.productId) await db.collection('users').doc(tx.userId).update({ purchasedProducts: firebase.firestore.FieldValue.arrayUnion(tx.productId) });
+            alert('Dikonfirmasi!');
             await loadTransactions();
         }
-
-        async function rejectPayment(txId) {
-            if (!confirm('Tolak pembayaran ini?')) return;
-            await db.collection('transactions').doc(txId).update({ status: 'failed' });
+        async function reject(id) {
+            if (!window.confirm('Tolak pembayaran?')) return;
+            await db.collection('transactions').doc(id).update({ status: 'failed' });
             await loadTransactions();
         }
-
-        init();
     </script>
 </body>
 
