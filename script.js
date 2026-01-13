@@ -3,15 +3,29 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('mousemove', (e) => {
         const x = e.clientX / window.innerWidth;
         const y = e.clientY / window.innerHeight;
-        
+
         const orb1 = document.querySelector('.background-glob');
         const orb2 = document.querySelector('.background-glob-2');
-        
-        if(orb1 && orb2) {
+
+        if (orb1 && orb2) {
             orb1.style.transform = `translate(${x * 30}px, ${y * 30}px)`;
             orb2.style.transform = `translate(${-x * 30}px, ${-y * 30}px)`;
         }
     });
+
+    // Dynamic Content Loading
+    fetch('/api/content')
+        .then(res => res.json())
+        .then(data => {
+            const heroTitle = document.getElementById('hero-title');
+            const heroDesc = document.getElementById('hero-desc');
+            const footerText = document.getElementById('footer-text');
+
+            if (heroTitle && data.hero_title) heroTitle.innerHTML = data.hero_title;
+            if (heroDesc && data.hero_desc) heroDesc.textContent = data.hero_desc;
+            if (footerText && data.footer_text) footerText.textContent = data.footer_text;
+        })
+        .catch(err => console.log('Using static content'));
 
     // Button Click Effect
     const notifyBtn = document.getElementById('notifyBtn');

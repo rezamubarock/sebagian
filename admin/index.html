@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login | Sebagian</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .login-card {
+            width: 100%;
+            max-width: 400px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="background-glob"></div>
+
+    <div class="glass-card login-card fade-in-up">
+        <h2 style="margin-bottom: 2rem;">Admin Login</h2>
+        <form id="loginForm">
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label>Password</label>
+                <input type="password" name="password" required placeholder="••••••••">
+            </div>
+            <button type="submit" class="btn-primary" style="width: 100%;">Masuk</button>
+        </form>
+        <p id="errorMsg" style="color: #ef4444; margin-top: 1rem; display: none; font-size: 0.9rem;">Password salah!</p>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const password = e.target.password.value;
+            const btn = e.target.querySelector('button');
+
+            btn.innerHTML = 'Memeriksa...';
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    body: JSON.stringify({ password }),
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (res.ok) {
+                    window.location.href = '/admin/dashboard.html';
+                } else {
+                    document.getElementById('errorMsg').style.display = 'block';
+                    btn.innerHTML = 'Masuk';
+                    btn.disabled = false;
+                }
+            } catch (err) {
+                alert('Terjadi kesalahan koneksi');
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+
+</html>
